@@ -3,12 +3,21 @@
 Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 
 [ccusage](https://github.com/ryoppippi/ccusage)가 내보낸 JSON을 단일 HTML
-파일에서 차트로 그려준다. 추가로 SwiftBar 플러그인이 들어 있어 macOS
-메뉴바에서도 오늘 사용량과 비용을 바로 확인할 수 있다.
+파일에서 차트로 그려준다. 데이터 갱신 스크립트는 Node 기반이라
+**macOS / Linux / Windows 모두에서 동작**한다. macOS 한정으로 메뉴바에서
+바로 확인할 수 있는 SwiftBar 플러그인도 들어 있다.
 
-> Claude Code의 로컬 사용 기록을 읽어 보여주는 도구로, 외부 서버에 데이터를
-> 보내지 않는다. 생성된 데이터(`data*.json`, `data.js`)는 `.gitignore`에
-> 포함되어 있어 실수로 커밋되지 않는다.
+> 외부 서버에 데이터를 보내지 않는다. 생성된 데이터(`data*.json`,
+> `data.js`)는 `.gitignore`에 포함되어 있어 실수로 커밋되지 않는다.
+
+## 플랫폼 호환성
+
+| 컴포넌트 | macOS | Linux | Windows |
+| --- | :---: | :---: | :---: |
+| `dashboard.html` (브라우저) | ✅ | ✅ | ✅ |
+| `update.mjs` (데이터 갱신) | ✅ | ✅ | ✅ |
+| `update.sh` (편의 래퍼) | ✅ | ✅ | ❌ (직접 `node update.mjs` 실행) |
+| SwiftBar 플러그인 (메뉴바) | ✅ | ❌ | ❌ |
 
 ## 화면 구성
 
@@ -22,60 +31,68 @@ Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 
 | 항목 | 비고 |
 | --- | --- |
-| macOS | 스크립트가 BSD `date -v` 옵션을 사용. Linux는 수정 필요 |
 | [Node.js](https://nodejs.org/) 18+ | `npx`로 ccusage 실행 |
 | [Claude Code](https://docs.claude.com/claude-code) | ccusage가 읽을 로컬 로그가 있어야 함 (`~/.claude/`) |
 | [jq](https://jqlang.github.io/jq/) (선택) | SwiftBar 플러그인용. `brew install jq` |
-| [SwiftBar](https://swiftbar.app/) (선택) | 메뉴바 플러그인용 |
+| [SwiftBar](https://swiftbar.app/) (선택, macOS) | 메뉴바 플러그인용 |
 
-## 설치 (3분)
+## 설치
+
+### macOS / Linux
 
 ```bash
-# 1) 클론
 git clone https://github.com/huhjayeon/cc-usage-board.git ~/claude-dashboard
 cd ~/claude-dashboard
-
-# 2) 실행 권한
-chmod +x update.sh plugins/claude-usage.5m.sh
-
-# 3) 데이터 첫 생성 (ccusage가 npx로 자동 설치됨, 30초~1분)
-./update.sh
-
-# 4) 브라우저로 열기
-open dashboard.html
+chmod +x update.sh update.mjs plugins/claude-usage.5m.sh
+./update.sh           # 데이터 첫 생성 (npx가 ccusage를 자동 설치, 30초~1분)
+open dashboard.html   # macOS. Linux는 xdg-open dashboard.html
 ```
+
+### Windows (PowerShell)
+
+```powershell
+git clone https://github.com/huhjayeon/cc-usage-board.git $HOME\claude-dashboard
+cd $HOME\claude-dashboard
+node update.mjs       # 데이터 첫 생성
+start dashboard.html  # 기본 브라우저로 열기
+```
+
+WSL을 쓰는 경우 macOS/Linux 절차를 그대로 따르면 된다.
 
 처음 실행 시 `npx`가 ccusage를 다운로드한다. `data-daily.json`,
 `data-monthly.json`, `data-session.json`, `data.js`가 생성되면 준비 완료.
 
 ## 데이터 갱신
 
-`update.sh`를 실행할 때마다 데이터가 새로고침된다.
+대시보드 우상단의 **새로고침** 버튼은 페이지를 다시 로드만 한다. 실제
+데이터를 새로 받으려면 갱신 스크립트를 다시 돌려야 한다.
 
 ```bash
+# macOS / Linux
 ~/claude-dashboard/update.sh
+
+# Windows
+node $HOME\claude-dashboard\update.mjs
 ```
 
-대시보드 우상단의 **새로고침** 버튼은 페이지를 다시 로드만 한다(데이터는
-파일에서 읽기 때문에 `update.sh`를 먼저 실행해야 최신 값이 보인다).
+주기적으로 돌리고 싶다면:
 
-cron이나 launchd로 주기적으로 돌릴 수도 있다:
+- macOS / Linux (cron):
+  ```
+  */5 * * * * $HOME/claude-dashboard/update.sh >/dev/null 2>&1
+  ```
+- Windows (작업 스케줄러): "프로그램 시작" 작업에 `node`,
+  인수 `update.mjs`, 시작 위치 `%USERPROFILE%\claude-dashboard` 지정.
 
-```bash
-# 예시: 5분마다
-*/5 * * * * $HOME/claude-dashboard/update.sh >/dev/null 2>&1
-```
-
-## SwiftBar 플러그인 (선택)
+## SwiftBar 플러그인 (macOS 전용)
 
 메뉴바에 오늘 토큰/비용을 표시하고 5분마다 자동 갱신한다. 작업량에 따라
 이모지가 바뀐다 (💤 / 🟢 / 🟡 / 🟠 / 🔥).
 
 ```bash
-# SwiftBar 설치 (미설치 시)
 brew install --cask swiftbar
+brew install jq
 
-# 플러그인 폴더에 심볼릭 링크
 ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
       ~/Library/Application\ Support/SwiftBar/Plugins/claude-usage.5m.sh
 ```
@@ -91,33 +108,39 @@ ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
 | 파일 | 역할 |
 | --- | --- |
 | `dashboard.html` | 메인 UI (HTML/CSS/JS 단일 파일, Chart.js CDN) |
-| `update.sh` | ccusage 호출 → `data*.json` / `data.js` 생성 |
-| `plugins/claude-usage.5m.sh` | SwiftBar 메뉴바 플러그인 |
+| `update.mjs` | ccusage 호출 → `data*.json` / `data.js` 생성 (크로스플랫폼) |
+| `update.sh` | macOS/Linux용 편의 래퍼. 내부적으로 `update.mjs` 호출 |
+| `plugins/claude-usage.5m.sh` | SwiftBar 메뉴바 플러그인 (macOS 전용) |
 | `data.js`, `data-*.json` | 생성된 데이터 (gitignore) |
 
 ## 트러블슈팅
 
-**`./update.sh` 실행 시 "command not found: npx"**
-Node.js 미설치. `brew install node` 또는 [공식 설치](https://nodejs.org/).
+**`command not found: node` / `npx`**
+Node.js 미설치. [공식 설치](https://nodejs.org/) 또는 macOS는 `brew install node`,
+Windows는 `winget install OpenJS.NodeJS`.
 
-**`update.sh`가 빈 데이터를 만든다**
-Claude Code 로컬 로그가 없는 것. Claude Code를 한 번이라도 써야 `~/.claude/`에
-사용 기록이 쌓인다. ccusage 동작 조건은
-[ccusage README](https://github.com/ryoppippi/ccusage)를 참고.
+**`update.mjs` 실행 시 빈 데이터만 나옴**
+Claude Code 로컬 로그가 없는 것. Claude Code를 한 번이라도 써야
+`~/.claude/`(macOS/Linux) 또는 `%USERPROFILE%\.claude\`(Windows)에 사용
+기록이 쌓인다. ccusage 동작 조건은
+[ccusage README](https://github.com/ryoppippi/ccusage) 참고.
 
 **대시보드에서 차트가 비어 보인다**
-- `data.js`가 생성됐는지 확인: `ls ~/claude-dashboard/data.js`
-- 브라우저 콘솔(⌥⌘I)에서 `window.CLAUDE_DATA` 출력 확인
-- 일부 브라우저는 `file://` 프로토콜에서 `<script src="data.js">`를 차단할
-  수 있다. 그럴 땐 `python3 -m http.server 8000`로 띄우고
-  `http://localhost:8000/dashboard.html`로 접속
+- `data.js`가 생성됐는지 확인
+- 브라우저 콘솔(⌥⌘I / F12)에서 `window.CLAUDE_DATA` 출력 확인
+- 일부 브라우저는 `file://` 프로토콜에서 `<script src="data.js">`를
+  차단할 수 있다. 그럴 땐 로컬 서버로 띄우자:
+  ```bash
+  python3 -m http.server 8000
+  # 브라우저에서 http://localhost:8000/dashboard.html
+  ```
 
 **SwiftBar 플러그인에 `🤖 jq 필요`만 보인다**
 `brew install jq` 후 SwiftBar 메뉴에서 "Refresh All".
 
-**Linux/WSL에서 쓰고 싶다**
-`update.sh`는 이식 가능하지만, 플러그인의 `date -v`(BSD) 옵션을 GNU
-`date -d`로 바꿔야 한다. PR 환영.
+**Windows PowerShell에서 실행 정책 오류**
+`update.mjs`는 PowerShell 스크립트가 아니라 Node 스크립트라 실행 정책과
+무관하다. `node update.mjs` 형태로 호출하면 된다.
 
 ## 라이선스
 

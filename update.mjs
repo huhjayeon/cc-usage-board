@@ -17,18 +17,28 @@ function runCcusage(subcommand, outPath, fallback) {
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] },
   );
 
-  if (result.status === 0 && result.stdout) {
-    writeFileSync(outPath, result.stdout);
-    return;
+  const useStdout = result.status === 0 && result.stdout;
+  const raw = useStdout ? result.stdout : fallback;
+
+  if (raw === undefined) {
+    console.error(`ccusage ${subcommand} 실패 (exit ${result.status})`);
+    process.exit(result.status ?? 1);
   }
 
-  if (fallback !== undefined) {
-    writeFileSync(outPath, fallback);
-    return;
+  // JSON 유효성 검증 후 저장 (정규화된 형태로)
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    console.error(`ccusage ${subcommand} 출력이 유효한 JSON이 아닙니다: ${e.message}`);
+    if (fallback !== undefined) {
+      writeFileSync(outPath, fallback);
+      return JSON.parse(fallback);
+    }
+    process.exit(1);
   }
-
-  console.error(`ccusage ${subcommand} 실패 (exit ${result.status})`);
-  process.exit(result.status ?? 1);
+  writeFileSync(outPath, JSON.stringify(parsed, null, 2) + '\n');
+  return parsed;
 }
 
 const dailyPath = join(DIR, 'data-daily.json');
@@ -36,17 +46,12 @@ const monthlyPath = join(DIR, 'data-monthly.json');
 const sessionPath = join(DIR, 'data-session.json');
 const dataJsPath = join(DIR, 'data.js');
 
-runCcusage('daily', dailyPath);
-runCcusage('monthly', monthlyPath);
+const daily = runCcusage('daily', dailyPath);
+const monthly = runCcusage('monthly', monthlyPath);
 runCcusage('session', sessionPath, '{"sessions":[]}');
 
-const daily = readFileSync(dailyPath, 'utf8').trimEnd();
-const monthly = readFileSync(monthlyPath, 'utf8').trimEnd();
 const generatedAt = new Date().toISOString();
-
-writeFileSync(
-  dataJsPath,
-  `window.CLAUDE_DATA = {\n  generatedAt: "${generatedAt}",\n  daily: ${daily},\n  monthly: ${monthly}\n};\n`,
-);
+const dataJs = `window.CLAUDE_DATA = ${JSON.stringify({ generatedAt, daily, monthly }, null, 2)};\n`;
+writeFileSync(dataJsPath, dataJs);
 
 console.log(`Updated: ${new Date().toString()}`);

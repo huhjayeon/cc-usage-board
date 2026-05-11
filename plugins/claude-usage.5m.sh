@@ -8,7 +8,10 @@
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
-DASH_DIR="$HOME/claude-dashboard"
+# 스크립트 자신의 위치에서 대시보드 폴더 도출 (심볼릭 링크 대응)
+SELF="$0"
+[ -L "$SELF" ] && SELF="$(readlink "$SELF")"
+DASH_DIR="$(cd "$(dirname "$SELF")/.." && pwd)"
 DATA="$DASH_DIR/data-daily.json"
 
 # 데이터 없으면 즉시 갱신 (최초 1회)

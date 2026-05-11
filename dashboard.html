@@ -233,7 +233,7 @@ function modelShort(name) {
   return { label: name, cls: '' };
 }
 
-async function load() {
+function load() {
   if (!window.CLAUDE_DATA) {
     throw new Error('data.js를 찾을 수 없어요. 먼저 ./update.sh (macOS/Linux) 또는 node update.mjs (Windows) 를 실행하세요.');
   }
@@ -292,7 +292,7 @@ function render({ daily, monthly }) {
   const monthCost = thisMonth?.totalCost || 0;
   const ratio = (monthCost / PLAN_PRICE_USD) * 100;
   document.getElementById('s-plan-name').textContent = `· ${PLAN_NAME} $${PLAN_PRICE_USD}`;
-  document.getElementById('s-plan-ratio').textContent = ratio >= 1000 ? Math.round(ratio) + '%' : ratio.toFixed(0) + '%';
+  document.getElementById('s-plan-ratio').textContent = Math.round(ratio) + '%';
   document.getElementById('s-plan-detail').textContent = `${(monthCost/PLAN_PRICE_USD).toFixed(1)}배 사용 · $${Math.round(monthCost)}`;
   const barWidth = Math.min(ratio, 100);
   const bar = document.getElementById('s-plan-bar');
@@ -385,12 +385,14 @@ function render({ daily, monthly }) {
   // ---- Model donut (this month) ----
   if (thisMonth?.modelBreakdowns?.length) {
     const breakdowns = thisMonth.modelBreakdowns;
+    const modelTokens = b => b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens;
+    const totalModelTokens = breakdowns.reduce((s, b) => s + modelTokens(b), 0);
     new Chart(document.getElementById('modelChart'), {
       type: 'doughnut',
       data: {
         labels: breakdowns.map(b => modelShort(b.modelName).label),
         datasets: [{
-          data: breakdowns.map(b => b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens),
+          data: breakdowns.map(modelTokens),
           backgroundColor: ['#d97757', '#79c0ff', '#56d364', '#f0a878', '#bc8cff'],
           borderColor: '#161b22',
           borderWidth: 2,
@@ -403,7 +405,7 @@ function render({ daily, monthly }) {
           legend: { position: 'bottom', labels: { color: '#e6edf3', font: { size: 10 }, boxWidth: 10, padding: 6 } },
           tooltip: {
             callbacks: {
-              label: ctx => `${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw/breakdowns.reduce((s,b)=>s+b.inputTokens+b.outputTokens+b.cacheCreationTokens+b.cacheReadTokens,0)*100).toFixed(0)}%)`
+              label: ctx => `${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw / totalModelTokens * 100).toFixed(0)}%)`
             }
           }
         }
@@ -510,9 +512,11 @@ function render({ daily, monthly }) {
   }
 }
 
-load().then(render).catch(err => {
+try {
+  render(load());
+} catch (err) {
   document.body.innerHTML = `<h1 style="color:#f85149">데이터 로드 실패</h1><pre>${err.message}\n\n터미널에서 먼저 실행:\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs</pre>`;
-});
+}
 </script>
 </body>
 </html>

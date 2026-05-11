@@ -41,6 +41,18 @@
   }
   .sub button:hover { border-color: var(--accent); }
 
+  .nav { display: flex; gap: 4px; margin-bottom: 16px; }
+  .nav a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    border: 1px solid transparent;
+  }
+  .nav a.active { background: var(--panel); border-color: var(--border); color: var(--text); }
+  .nav a:hover:not(.active) { background: var(--panel-2); color: var(--text); }
+
   .grid-stats {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -127,6 +139,10 @@
 </head>
 <body>
 <h1>Claude 토큰 사용량 대시보드</h1>
+<div class="nav">
+  <a href="dashboard.html" class="active">대시보드</a>
+  <a href="monthly.html">월별 상세</a>
+</div>
 <div class="sub">
   <span id="updated"></span>
   <button onclick="location.reload()">🔄 새로고침</button>

@@ -21,11 +21,22 @@ Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 
 ## 화면 구성
 
+상단 네비게이션에서 두 페이지를 전환할 수 있다.
+
+### `dashboard.html` — 전체 개요
 - **카드**: 오늘 / 어제 / 최근 7일 / 이번 달 / 누적 / 플랜 대비 사용률
 - **월별 추이**: 총 토큰 + 비용 환산 ($)
 - **최근 60일 일별 토큰** 차트
 - **활동 히트맵**: 최근 90일 (GitHub 스타일)
 - **이번 달 모델별 비중** 도넛 차트
+- **최근 30일 일별 상세** 테이블
+
+### `monthly.html` — 월별 상세
+- 상단 드롭다운으로 **임의의 월 선택**
+- 그 월의 카드 (총 토큰 / 총 비용 / 일평균 / 피크일)
+- **그 월의 1일~말일 일별 차트** (주말 색상 구분, 진행 중인 달은 일평균이 경과일 기준)
+- **그 월의 모델별 비중** 도넛
+- **그 월의 일별 상세** 테이블 (Input / Output / Cache Read 컬럼 포함)
 
 ## 요구사항
 
@@ -107,7 +118,8 @@ ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
 
 | 파일 | 역할 |
 | --- | --- |
-| `dashboard.html` | 메인 UI (HTML/CSS/JS 단일 파일, Chart.js CDN) |
+| `dashboard.html` | 메인 UI — 전체 개요 (Chart.js CDN) |
+| `monthly.html` | 월별 상세 — 드롭다운으로 월 선택 |
 | `update.mjs` | ccusage 호출 → `data*.json` / `data.js` 생성 (크로스플랫폼) |
 | `update.sh` | macOS/Linux용 편의 래퍼. 내부적으로 `update.mjs` 호출 |
 | `plugins/claude-usage.5m.sh` | SwiftBar 메뉴바 플러그인 (macOS 전용) |

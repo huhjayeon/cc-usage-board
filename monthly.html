@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Claude Usage · 월별 상세</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #d97757;
+    --accent-2: #f0a878;
+    --good: #3fb950;
+    --warn: #d29922;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Pretendard', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+  }
+  h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+
+  .nav { display: flex; gap: 4px; margin-bottom: 16px; }
+  .nav a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    border: 1px solid transparent;
+  }
+  .nav a.active { background: var(--panel); border-color: var(--border); color: var(--text); }
+  .nav a:hover:not(.active) { background: var(--panel-2); color: var(--text); }
+
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .sub select {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .sub select:hover { border-color: var(--accent); }
+  .sub select:focus { outline: none; border-color: var(--accent); }
+
+  .grid-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .stat .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .stat .val { font-size: 22px; font-weight: 600; }
+  .stat .sub-val { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .grid-main {
+    display: grid;
+    grid-template-columns: 7fr 3fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .panel h2 { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--text); }
+  .panel .sub-h { color: var(--muted); font-size: 11px; font-weight: 400; }
+
+  canvas { max-width: 100%; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr:hover { background: var(--panel-2); }
+
+  .model-pill {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    margin-right: 3px;
+    color: var(--muted);
+  }
+  .model-pill.opus { color: #f0a878; border-color: #5c3a2e; }
+  .model-pill.sonnet { color: #79c0ff; border-color: #2c4a6e; }
+  .model-pill.haiku { color: #56d364; border-color: #1f5028; }
+
+  .empty { color: var(--muted); text-align: center; padding: 40px; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>Claude 토큰 사용량 — 월별 상세</h1>
+<div class="nav">
+  <a href="dashboard.html">대시보드</a>
+  <a href="monthly.html" class="active">월별 상세</a>
+</div>
+
+<div class="sub">
+  <label for="month-select">월 선택:</label>
+  <select id="month-select"></select>
+  <span id="month-meta"></span>
+</div>
+
+<div class="grid-stats">
+  <div class="stat"><div class="label">총 토큰</div><div class="val" id="m-total">-</div><div class="sub-val" id="m-total-sub"></div></div>
+  <div class="stat"><div class="label">총 비용</div><div class="val" id="m-cost">-</div><div class="sub-val" id="m-cost-sub"></div></div>
+  <div class="stat"><div class="label">일평균 토큰</div><div class="val" id="m-avg">-</div><div class="sub-val" id="m-avg-sub"></div></div>
+  <div class="stat"><div class="label">피크일</div><div class="val" id="m-peak">-</div><div class="sub-val" id="m-peak-sub"></div></div>
+</div>
+
+<div class="grid-main">
+  <div class="panel">
+    <h2>일별 토큰 추이 <span class="sub-h" id="daily-meta"></span></h2>
+    <canvas id="dailyChart" height="140"></canvas>
+  </div>
+  <div class="panel">
+    <h2>모델별 비중</h2>
+    <div style="height: 200px; display: flex; align-items: center; justify-content: center;">
+      <canvas id="modelChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="panel" style="margin-top: 16px;">
+  <h2>일별 상세 <span class="sub-h" id="table-meta"></span></h2>
+  <table>
+    <thead>
+      <tr>
+        <th>날짜</th>
+        <th>요일</th>
+        <th>모델</th>
+        <th class="num">총 토큰</th>
+        <th class="num">Input</th>
+        <th class="num">Output</th>
+        <th class="num">Cache Read</th>
+        <th class="num">비용 환산</th>
+      </tr>
+    </thead>
+    <tbody id="dailyTable"></tbody>
+  </table>
+  <div id="empty-state" class="empty" style="display:none;">선택한 월에 데이터가 없습니다.</div>
+</div>
+
+<script>
+const fmt = n => {
+  if (n == null || isNaN(n)) return '0';
+  n = Math.round(n);
+  if (n >= 1e8) {
+    const eok = n / 1e8;
+    return (eok >= 10 ? Math.round(eok).toLocaleString() : eok.toFixed(1)) + '억';
+  }
+  if (n >= 1e4) return Math.round(n / 1e4).toLocaleString() + '만';
+  return n.toLocaleString();
+};
+const fmtUSD = n => '$' + (n < 10 ? n.toFixed(2) : Math.round(n).toLocaleString());
+const dow = ['일','월','화','수','목','금','토'];
+
+function modelShort(name) {
+  if (name.includes('opus')) {
+    const m = name.match(/opus-(\d+-\d+)/);
+    return { label: 'Opus ' + (m ? m[1].replace('-','.') : ''), cls: 'opus' };
+  }
+  if (name.includes('sonnet')) {
+    const m = name.match(/sonnet-(\d+-\d+)/);
+    return { label: 'Sonnet ' + (m ? m[1].replace('-','.') : ''), cls: 'sonnet' };
+  }
+  if (name.includes('haiku')) {
+    const m = name.match(/haiku-(\d+-\d+)/);
+    return { label: 'Haiku ' + (m ? m[1].replace('-','.') : ''), cls: 'haiku' };
+  }
+  return { label: name, cls: '' };
+}
+
+if (!window.CLAUDE_DATA) {
+  document.body.innerHTML = `<h1 style="color:#f85149">데이터 로드 실패</h1><pre>data.js를 찾을 수 없어요.\n\n터미널에서 먼저 실행:\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs</pre>`;
+} else {
+  const daily = window.CLAUDE_DATA.daily.daily;
+  const monthly = window.CLAUDE_DATA.monthly.monthly;
+
+  // 사용 가능한 월 = monthly 데이터의 month 목록 (최신순)
+  const months = [...monthly].map(m => m.month).sort().reverse();
+  const select = document.getElementById('month-select');
+  for (const m of months) {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    select.appendChild(opt);
+  }
+
+  let dailyChart, modelChart;
+
+  function daysInMonth(yyyymm) {
+    const [y, mo] = yyyymm.split('-').map(Number);
+    return new Date(y, mo, 0).getDate();
+  }
+
+  function renderMonth(yyyymm) {
+    const monthData = monthly.find(m => m.month === yyyymm);
+    const monthDaily = daily.filter(d => d.date.startsWith(yyyymm));
+
+    // Stats
+    const totalTok = monthData?.totalTokens || 0;
+    const totalCost = monthData?.totalCost || 0;
+    const dim = daysInMonth(yyyymm);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const isCurrentMonth = todayStr.startsWith(yyyymm);
+    const daysElapsed = isCurrentMonth ? new Date().getDate() : dim;
+    const avg = daysElapsed > 0 ? totalTok / daysElapsed : 0;
+    const peak = monthDaily.reduce((p, d) => d.totalTokens > (p?.totalTokens || 0) ? d : p, null);
+
+    document.getElementById('month-meta').textContent =
+      `· ${monthDaily.length}일 데이터` +
+      (isCurrentMonth ? ` · 진행 중 (${daysElapsed}/${dim}일)` : ` · 전체 ${dim}일`);
+
+    document.getElementById('m-total').textContent = fmt(totalTok);
+    document.getElementById('m-total-sub').textContent = totalTok.toLocaleString() + ' 토큰';
+    document.getElementById('m-cost').textContent = fmtUSD(totalCost);
+    document.getElementById('m-cost-sub').textContent = `${monthData?.modelsUsed?.length || 0}개 모델 사용`;
+    document.getElementById('m-avg').textContent = fmt(avg);
+    document.getElementById('m-avg-sub').textContent = isCurrentMonth ? '진행 중 일평균' : '월 일평균';
+    document.getElementById('m-peak').textContent = peak ? fmt(peak.totalTokens) : '-';
+    document.getElementById('m-peak-sub').textContent = peak ? `${peak.date} (${dow[new Date(peak.date).getDay()]})` : '';
+
+    // Daily chart: 그 월의 1일~말일 (없는 날은 0)
+    const [y, mo] = yyyymm.split('-').map(Number);
+    const filled = [];
+    const dailyMap = new Map(monthDaily.map(d => [d.date, d]));
+    for (let day = 1; day <= dim; day++) {
+      const ds = `${yyyymm}-${String(day).padStart(2, '0')}`;
+      const d = dailyMap.get(ds);
+      filled.push({ date: ds, day, tokens: d?.totalTokens || 0, cost: d?.totalCost || 0, dow: new Date(y, mo - 1, day).getDay() });
+    }
+    document.getElementById('daily-meta').textContent =
+      `· 일평균 ${fmt(avg)} · 피크 ${peak ? fmt(peak.totalTokens) : '-'}`;
+
+    if (dailyChart) dailyChart.destroy();
+    dailyChart = new Chart(document.getElementById('dailyChart'), {
+      type: 'bar',
+      data: {
+        labels: filled.map(d => d.day),
+        datasets: [{
+          label: '총 토큰',
+          data: filled.map(d => d.tokens),
+          backgroundColor: filled.map(d => d.dow === 0 || d.dow === 6 ? '#bc8cff' : (d.tokens > avg * 1.5 ? '#f0a878' : '#d97757')),
+          borderRadius: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: ctx => `${filled[ctx[0].dataIndex].date} (${dow[filled[ctx[0].dataIndex].dow]})`,
+              label: ctx => {
+                const d = filled[ctx.dataIndex];
+                return [`${fmt(d.tokens)} 토큰`, `${fmtUSD(d.cost)} 환산`];
+              }
+            }
+          }
+        },
+        scales: {
+          y: { ticks: { color: '#8b949e', callback: v => fmt(v) }, grid: { color: '#30363d' } },
+          x: { ticks: { color: '#8b949e', maxRotation: 0, autoSkip: true, maxTicksLimit: 16 }, grid: { display: false } },
+        },
+      },
+    });
+
+    // Model donut
+    if (modelChart) modelChart.destroy();
+    if (monthData?.modelBreakdowns?.length) {
+      const breakdowns = monthData.modelBreakdowns;
+      const modelTokens = b => b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens;
+      const totalModelTokens = breakdowns.reduce((s, b) => s + modelTokens(b), 0);
+      modelChart = new Chart(document.getElementById('modelChart'), {
+        type: 'doughnut',
+        data: {
+          labels: breakdowns.map(b => modelShort(b.modelName).label),
+          datasets: [{
+            data: breakdowns.map(modelTokens),
+            backgroundColor: ['#d97757', '#79c0ff', '#56d364', '#f0a878', '#bc8cff'],
+            borderColor: '#161b22',
+            borderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#e6edf3', font: { size: 10 }, boxWidth: 10, padding: 6 } },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw / totalModelTokens * 100).toFixed(0)}%)`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Daily table
+    const tbody = document.getElementById('dailyTable');
+    tbody.innerHTML = '';
+    const sorted = [...monthDaily].sort((a, b) => b.date.localeCompare(a.date));
+    if (sorted.length === 0) {
+      document.getElementById('empty-state').style.display = 'block';
+    } else {
+      document.getElementById('empty-state').style.display = 'none';
+      for (const d of sorted) {
+        const dt = new Date(d.date);
+        const models = (d.modelsUsed || []).map(m => {
+          const s = modelShort(m);
+          return `<span class="model-pill ${s.cls}">${s.label}</span>`;
+        }).join('');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${d.date}</td>
+          <td>${dow[dt.getDay()]}</td>
+          <td>${models}</td>
+          <td class="num">${fmt(d.totalTokens)}</td>
+          <td class="num">${fmt(d.inputTokens)}</td>
+          <td class="num">${fmt(d.outputTokens)}</td>
+          <td class="num">${fmt(d.cacheReadTokens)}</td>
+          <td class="num">${fmtUSD(d.totalCost)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+    document.getElementById('table-meta').textContent = `· ${sorted.length}일`;
+  }
+
+  select.addEventListener('change', e => renderMonth(e.target.value));
+  if (months.length > 0) {
+    select.value = months[0];
+    renderMonth(months[0]);
+  }
+}
+</script>
+</body>
+</html>

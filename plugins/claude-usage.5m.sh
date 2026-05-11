@@ -2,7 +2,8 @@
 # SwiftBar plugin: Claude Code 일일 토큰 사용량
 # 파일명 규칙: claude-usage.5m.sh → 5분마다 자동 갱신
 # <bitbar.title>Claude Token Usage</bitbar.title>
-# <bitbar.author>nd0210</bitbar.author>
+# <bitbar.author>huhjayeon</bitbar.author>
+# <bitbar.github>huhjayeon</bitbar.github>
 # <bitbar.desc>오늘 Claude Code 사용 토큰 표시</bitbar.desc>
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"

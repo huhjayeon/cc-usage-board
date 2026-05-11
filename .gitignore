@@ -1,0 +1,14 @@
+# 개인 사용량 데이터 (update.sh로 자동 생성됨)
+data.js
+data-daily.json
+data-monthly.json
+data-session.json
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log

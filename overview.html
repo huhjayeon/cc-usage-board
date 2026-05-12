@@ -103,6 +103,17 @@
   .panel h2 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--text); }
   .panel .sub-h { color: var(--muted); font-size: 10px; font-weight: 400; }
 
+  /* 도넛 패널은 그리드 행 높이를 따라 채워야 빈 공간이 안 생김 */
+  .donut-panel { display: flex; flex-direction: column; }
+  .donut-wrap {
+    flex: 1;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
   canvas { max-width: 100%; }
 
   .table-wrap { max-height: 220px; overflow-y: auto; }
@@ -186,9 +197,9 @@
 </div>
 
 <div class="grid-triple">
-  <div class="panel">
+  <div class="panel donut-panel">
     <h2 data-i18n="panelAllModelBreakdown"></h2>
-    <div style="height: 150px; display: flex; align-items: center; justify-content: center;">
+    <div class="donut-wrap">
       <canvas id="modelChart"></canvas>
     </div>
   </div>

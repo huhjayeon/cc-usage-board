@@ -38,6 +38,8 @@ if [ "$LANG_PREF" = "ko" ]; then
   T_OPEN_FOLDER="📁 폴더 열기"
   T_LAST_UPDATED="마지막 갱신"
   T_JQ_NEEDED="🤖 jq 필요"
+  T_SWITCH_LANG="🌐 English"
+  OTHER_LANG="en"
 else
   T_TITLE="Claude Code usage"
   T_TODAY="Today"
@@ -49,6 +51,8 @@ else
   T_OPEN_FOLDER="📁 Open folder"
   T_LAST_UPDATED="Last updated"
   T_JQ_NEEDED="🤖 jq required"
+  T_SWITCH_LANG="🌐 한국어"
+  OTHER_LANG="ko"
 fi
 
 # Trigger first-time data generation if missing.
@@ -154,5 +158,7 @@ echo "---"
 echo "$T_OPEN_DASH | bash=open param1=$DASH_DIR/dashboard.html terminal=false"
 echo "$T_REFRESH | bash=$DASH_DIR/update.sh terminal=false refresh=true"
 echo "$T_OPEN_FOLDER | bash=open param1=$DASH_DIR terminal=false"
+echo "---"
+echo "$T_SWITCH_LANG | bash=bash param1=-c param2=\"echo $OTHER_LANG > $HOME/.claude-dashboard-lang\" terminal=false refresh=true"
 echo "---"
 echo "$T_LAST_UPDATED: $(stat -f '%Sm' -t '%H:%M' "$DATA" 2>/dev/null) | size=10 color=gray"

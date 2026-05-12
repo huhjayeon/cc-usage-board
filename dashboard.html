@@ -170,38 +170,36 @@
   <div class="stat highlight"><div class="label"><span data-i18n="statPlan"></span> <span id="s-plan-name" style="color:var(--muted)"></span></div><div class="val" id="s-plan-ratio">-</div><div class="sub-val" id="s-plan-detail"></div><div class="bar"><div id="s-plan-bar" style="width:0%"></div></div></div>
 </div>
 
-<div class="grid-main" style="grid-template-columns: 1fr 1fr;">
+<div class="grid-main" style="grid-template-columns: 1fr 1fr 1fr;">
   <div class="panel">
     <h2 data-i18n="panelMonthlyTrend"></h2>
-    <canvas id="monthlyChart" height="160"></canvas>
+    <canvas id="monthlyChart" height="130"></canvas>
   </div>
   <div class="panel">
     <h2><span data-i18n="panelDaily60"></span> <span class="sub-h" id="daily-meta"></span></h2>
-    <canvas id="dailyChart" height="160"></canvas>
-  </div>
-</div>
-
-<div class="grid-main" style="grid-template-columns: 7fr 3fr;">
-  <div class="panel">
-    <h2><span data-i18n="panelHeatmap"></span> <span class="sub-h" data-i18n="panelHeatmapSub"></span></h2>
-    <div class="heatmap-wrap">
-      <div id="heatmap"></div>
-    </div>
-    <div class="heatmap-legend">
-      <span data-i18n="heatmapLess"></span>
-      <div class="cell"></div>
-      <div class="cell l1"></div>
-      <div class="cell l2"></div>
-      <div class="cell l3"></div>
-      <div class="cell l4"></div>
-      <span data-i18n="heatmapMore"></span>
-    </div>
+    <canvas id="dailyChart" height="130"></canvas>
   </div>
   <div class="panel">
     <h2 data-i18n="panelModelBreakdownThisMonth"></h2>
-    <div class="canvas-center" style="height: 200px;">
+    <div class="canvas-center" style="height: 150px;">
       <canvas id="modelChart"></canvas>
     </div>
+  </div>
+</div>
+
+<div class="panel" style="margin-top: 16px;">
+  <h2><span data-i18n="panelHeatmap"></span> <span class="sub-h" data-i18n="panelHeatmapSub"></span></h2>
+  <div class="heatmap-wrap">
+    <div id="heatmap"></div>
+  </div>
+  <div class="heatmap-legend">
+    <span data-i18n="heatmapLess"></span>
+    <div class="cell"></div>
+    <div class="cell l1"></div>
+    <div class="cell l2"></div>
+    <div class="cell l3"></div>
+    <div class="cell l4"></div>
+    <span data-i18n="heatmapMore"></span>
   </div>
 </div>
 

@@ -4,6 +4,8 @@
 
 Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 
+![dashboard](docs/screenshots/dashboard_ko.png)
+
 [ccusage](https://github.com/ryoppippi/ccusage)가 내보낸 JSON을 단일 HTML
 파일에서 차트로 그려준다. 데이터 갱신 스크립트는 Node 기반이라
 **macOS / Linux / Windows 모두에서 동작**한다. macOS 한정으로 메뉴바에서
@@ -40,6 +42,9 @@ Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 - **최근 30일 일별 상세** 테이블
 
 ### `overview.html` — 전체 기간
+
+![overview](docs/screenshots/overview_ko.png)
+
 - **집계 카드**: 전체 누적 / **월 평균** (토큰+비용) / 가장 비싼 월 / 가장 적은 월
 - **월별 추이 차트**: 막대(토큰) + 선(비용) + 점선(월 평균)
 - **누적 사용량 곡선**: 첫 기록 이후 일별 누적 토큰(영역) + 누적 비용(선)
@@ -109,6 +114,8 @@ node $HOME\claude-dashboard\update.mjs
 
 ## SwiftBar 플러그인 (macOS 전용)
 
+<img src="docs/screenshots/menubar_ko.png" width="240" align="right">
+
 메뉴바에 오늘 토큰/비용을 표시하고 5분마다 자동 갱신한다. 작업량에 따라
 이모지가 바뀐다 (💤 / 🟢 / 🟡 / 🟠 / 🔥).
 
@@ -125,6 +132,18 @@ ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
 - **대시보드 열기** — `dashboard.html`을 브라우저에서 열기
 - **지금 갱신** — `update.sh` 즉시 실행
 - **폴더 열기** — 프로젝트 폴더 열기
+- **🌐 English / 🌐 한국어** — 클릭 한 번으로 언어 전환
+
+### 플러그인 언어 설정
+
+메뉴의 토글 외에 다음 방법으로도 언어를 고정할 수 있다 (우선순위 순):
+
+1. **SwiftBar 변수** — 플러그인 설정 → Variables → `CC_USAGE_LANG=ko`
+2. **파일** — `echo ko > ~/.claude-dashboard-lang`
+3. **시스템** — `$LANG`이 `ko_*`로 시작하면 자동 KO, 그 외 EN
+4. 기본값은 영어
+
+숫자 단위도 함께 바뀐다 (KO: `만/억`, EN: `K/M/B`).
 
 ## 파일별 역할
 

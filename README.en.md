@@ -4,6 +4,8 @@
 
 A local dashboard that visualizes Claude Code token usage.
 
+![dashboard](docs/screenshots/dashboard.png)
+
 It renders JSON exported by [ccusage](https://github.com/ryoppippi/ccusage)
 into a single HTML file with charts. The data update script is Node-based
 so it **runs on macOS, Linux, and Windows**. macOS users also get a
@@ -42,6 +44,9 @@ The top nav switches between two pages.
 - **Last 30 days daily detail** table
 
 ### `overview.html` — All Time
+
+![overview](docs/screenshots/overview.png)
+
 - **Aggregate cards**: all-time total / **monthly average** (tokens+cost) / most expensive month / cheapest month
 - **Monthly trend chart**: bars (tokens) + line (cost) + dashed (monthly average)
 - **Cumulative usage curve**: daily running total since first record (tokens area + cost line)
@@ -113,6 +118,8 @@ To refresh on a schedule:
 
 ## SwiftBar plugin (macOS only)
 
+<img src="docs/screenshots/menubar_en.png" width="240" align="right">
+
 Displays today's tokens/cost in the menu bar and auto-refreshes every
 5 minutes. The leading emoji reflects workload intensity
 (💤 / 🟢 / 🟡 / 🟠 / 🔥).
@@ -130,6 +137,18 @@ Menu entries:
 - **Open dashboard** — opens `dashboard.html` in the browser
 - **Refresh now** — runs `update.sh` immediately
 - **Open folder** — opens the project folder
+- **🌐 한국어 / 🌐 English** — one-click language switch
+
+### Plugin language settings
+
+Besides the in-menu toggle, you can pin a language via (highest priority first):
+
+1. **SwiftBar variable** — plugin settings → Variables → `CC_USAGE_LANG=ko`
+2. **File** — `echo ko > ~/.claude-dashboard-lang`
+3. **System locale** — `$LANG` starting with `ko_*` selects KO, otherwise EN
+4. Default is English
+
+Number units follow the locale (KO: `만/억`, EN: `K/M/B`).
 
 ## File guide
 

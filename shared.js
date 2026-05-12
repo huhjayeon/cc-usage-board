@@ -1,5 +1,5 @@
 // shared.js — utilities used by every dashboard page.
-// Globals: modelShort, CHART_COLORS
+// Globals: modelShort, CHART_COLORS, el, buildModelPills
 
 function modelShort(name) {
   if (name.includes('opus')) {
@@ -19,3 +19,35 @@ function modelShort(name) {
 
 // Default chart palette. Use .slice(0, n) when fewer colors are needed.
 const CHART_COLORS = ['#d97757', '#79c0ff', '#56d364', '#f0a878', '#bc8cff', '#8b949e'];
+
+// Tiny DOM builder: el('div', {class: 'x'}, 'text', el('span', ...))
+// String/number children are inserted as text nodes (safe from HTML injection).
+// null/undefined/false children are skipped.
+function el(tag, attrs, ...children) {
+  const node = document.createElement(tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === 'class') node.className = v;
+      else if (k === 'style' && typeof v === 'object') Object.assign(node.style, v);
+      else node.setAttribute(k, v);
+    }
+  }
+  for (const c of children) {
+    if (c == null || c === false) continue;
+    node.appendChild(typeof c === 'string' || typeof c === 'number'
+      ? document.createTextNode(String(c))
+      : c);
+  }
+  return node;
+}
+
+// Build a DocumentFragment of <span class="model-pill ..."> for a list of model names.
+function buildModelPills(modelNames) {
+  const frag = document.createDocumentFragment();
+  for (const name of modelNames || []) {
+    const s = modelShort(name);
+    frag.appendChild(el('span', { class: s.cls ? 'model-pill ' + s.cls : 'model-pill' }, s.label));
+  }
+  return frag;
+}

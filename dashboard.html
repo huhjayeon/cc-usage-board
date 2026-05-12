@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <title data-i18n="pageTitleDashboard">Claude Usage Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+        integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"
+        integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws"
+        crossorigin="anonymous"></script>
 <script src="i18n.js"></script>
 <script src="shared.js"></script>
 <script src="data.js"></script>
@@ -302,17 +306,22 @@ function render({ daily, monthly }) {
   bar.style.background = ratio < 50 ? '#8b949e' : ratio < 100 ? '#3fb950' : ratio < 300 ? '#56d364' : ratio < 500 ? '#f0a878' : '#d97757';
 
   // Deltas
-  const delta = (cur, prev) => {
-    if (!prev) return '';
+  const deltaSpan = (cur, prev, labelText) => {
+    if (!prev) return null;
     const pct = ((cur - prev) / prev) * 100;
-    const sign = pct >= 0 ? '↑' : '↓';
-    return `<span class="${pct >= 0 ? 'up' : 'down'}">${sign} ${Math.abs(pct).toFixed(0)}% ${I18N.t('deltaVsYesterday')}</span>`;
+    const up = pct >= 0;
+    return el('span', { class: up ? 'up' : 'down' },
+      (up ? '↑' : '↓') + ' ' + Math.abs(pct).toFixed(0) + '% ' + labelText);
   };
-  document.getElementById('s-today-delta').innerHTML =
-    todayD && yestD ? delta(todayD.totalTokens, yestD.totalTokens) : '';
+  const setDelta = (id, span) => {
+    const target = document.getElementById(id);
+    target.replaceChildren();
+    if (span) target.appendChild(span);
+  };
+  setDelta('s-today-delta',
+    todayD && yestD ? deltaSpan(todayD.totalTokens, yestD.totalTokens, I18N.t('deltaVsYesterday')) : null);
   const week7 = sumTok(last7), prevWeek7 = sumTok(prev7);
-  document.getElementById('s-week-delta').innerHTML =
-    prevWeek7 ? `<span class="${week7 >= prevWeek7 ? 'up' : 'down'}">${week7 >= prevWeek7 ? '↑' : '↓'} ${Math.abs(((week7-prevWeek7)/prevWeek7)*100).toFixed(0)}% ${I18N.t('deltaVsPrev7')}</span>` : '';
+  setDelta('s-week-delta', deltaSpan(week7, prevWeek7, I18N.t('deltaVsPrev7')));
   // MTD comparison: same range (e.g. 5/1~5/11 vs 4/1~4/11)
   const todayDate = new Date(today);
   const todayDay = todayDate.getDate();
@@ -325,12 +334,7 @@ function render({ daily, monthly }) {
     .reduce((s, d) => s + d.totalTokens, 0);
   const mtdNow = sumRange(monthStart, 1, todayDay);
   const mtdPrev = sumRange(prevMonthStr, 1, todayDay);
-  if (mtdPrev > 0) {
-    const up = mtdNow >= mtdPrev;
-    const pct = Math.abs(((mtdNow - mtdPrev) / mtdPrev) * 100).toFixed(0);
-    document.getElementById('s-month-delta').innerHTML =
-      `<span class="${up ? 'up' : 'down'}">${up ? '↑' : '↓'} ${pct}% ${I18N.t('deltaVsLastMonth', todayDay)}</span>`;
-  }
+  setDelta('s-month-delta', deltaSpan(mtdNow, mtdPrev, I18N.t('deltaVsLastMonth', todayDay)));
 
   // ---- Daily chart (last 60 days) ----
   const since60 = dateOffset(-60);
@@ -493,20 +497,15 @@ function render({ daily, monthly }) {
   const recent30 = [...daily].slice(-30).reverse();
   for (const d of recent30) {
     const dt = new Date(d.date);
-    const tr = document.createElement('tr');
-    const models = (d.modelsUsed || []).map(m => {
-      const s = modelShort(m);
-      return `<span class="model-pill ${s.cls}">${s.label}</span>`;
-    }).join('');
-    tr.innerHTML = `
-      <td>${d.date}</td>
-      <td>${dow[dt.getDay()]}</td>
-      <td>${models}</td>
-      <td class="num">${fmt(d.totalTokens)}</td>
-      <td class="num">${fmt(d.outputTokens)}</td>
-      <td class="num">${fmt(d.cacheReadTokens)}</td>
-      <td class="num">${fmtUSD(d.totalCost)}</td>
-    `;
+    const tr = el('tr', null,
+      el('td', null, d.date),
+      el('td', null, dow[dt.getDay()]),
+      el('td', null, buildModelPills(d.modelsUsed)),
+      el('td', { class: 'num' }, fmt(d.totalTokens)),
+      el('td', { class: 'num' }, fmt(d.outputTokens)),
+      el('td', { class: 'num' }, fmt(d.cacheReadTokens)),
+      el('td', { class: 'num' }, fmtUSD(d.totalCost)),
+    );
     tbody.appendChild(tr);
   }
 }

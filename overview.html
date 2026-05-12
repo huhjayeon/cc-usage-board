@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title data-i18n="pageTitleOverview">Claude Usage · All Time</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+        integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+        crossorigin="anonymous"></script>
 <script src="i18n.js"></script>
 <script src="shared.js"></script>
 <script src="data.js"></script>
@@ -542,33 +544,32 @@ if (!window.CLAUDE_DATA) {
     const monthDaily = dailyByMonth.get(m.month) || [];
     const activityDays = monthDaily.length;
     const dailyAvg = activityDays > 0 ? m.totalTokens / activityDays : 0;
-    const models = (m.modelsUsed || []).map(name => {
-      const s = modelShort(name);
-      return `<span class="model-pill ${s.cls}">${s.label}</span>`;
-    }).join('');
+    const isCurrent = m.month === todayMonth;
 
-    let deltaHtml = '<span style="color:var(--muted)">-</span>';
+    let deltaCell;
     if (prev && prev.totalTokens > 0) {
       const pct = ((m.totalTokens - prev.totalTokens) / prev.totalTokens) * 100;
       const up = pct >= 0;
-      deltaHtml = `<span class="${up ? 'delta-up' : 'delta-down'}">${up ? '↑' : '↓'} ${Math.abs(pct).toFixed(0)}%</span>`;
+      deltaCell = el('span', { class: up ? 'delta-up' : 'delta-down' },
+        (up ? '↑' : '↓') + ' ' + Math.abs(pct).toFixed(0) + '%');
+    } else {
+      deltaCell = el('span', { style: { color: 'var(--muted)' } }, '-');
     }
 
-    const isCurrent = m.month === todayMonth;
-    const tr = document.createElement('tr');
-    if (isCurrent) tr.className = 'current-month';
-    const monthLabel = isCurrent
-      ? `${m.month}<span class="in-progress-tag">${I18N.t('inProgressTag')}</span>`
-      : m.month;
-    tr.innerHTML = `
-      <td>${monthLabel}</td>
-      <td class="num">${fmt(m.totalTokens)}</td>
-      <td class="num">${fmtUSD(m.totalCost)}</td>
-      <td class="num">${activityDays}${I18N.t('daysSuffix')}</td>
-      <td class="num">${fmt(dailyAvg)}</td>
-      <td class="num">${deltaHtml}</td>
-      <td>${models}</td>
-    `;
+    const monthCell = el('td', null,
+      m.month,
+      isCurrent ? el('span', { class: 'in-progress-tag' }, I18N.t('inProgressTag')) : null,
+    );
+
+    const tr = el('tr', { class: isCurrent ? 'current-month' : null },
+      monthCell,
+      el('td', { class: 'num' }, fmt(m.totalTokens)),
+      el('td', { class: 'num' }, fmtUSD(m.totalCost)),
+      el('td', { class: 'num' }, activityDays + I18N.t('daysSuffix')),
+      el('td', { class: 'num' }, fmt(dailyAvg)),
+      el('td', { class: 'num' }, deltaCell),
+      el('td', null, buildModelPills(m.modelsUsed)),
+    );
     tbody.appendChild(tr);
   }
 }

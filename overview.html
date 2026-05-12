@@ -2,8 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Claude Usage · 전체 기간</title>
+<title data-i18n="pageTitleOverview">Claude Usage · All Time</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="i18n.js"></script>
 <script src="data.js"></script>
 <style>
   :root {
@@ -26,7 +27,28 @@
     color: var(--text);
     padding: 24px;
   }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
   h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+
+  .lang-toggle {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .lang-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
   .nav { display: flex; gap: 4px; margin-bottom: 16px; }
   .nav a {
@@ -83,7 +105,7 @@
   td.num { text-align: right; font-variant-numeric: tabular-nums; }
   tbody tr:hover { background: var(--panel-2); }
   tbody tr.current-month { background: rgba(217, 119, 87, 0.06); }
-  tbody tr.current-month td:first-child::after { content: ' · 진행 중'; color: var(--accent); font-size: 10px; }
+  .in-progress-tag { color: var(--accent); font-size: 10px; }
 
   .model-pill {
     display: inline-block;
@@ -104,32 +126,35 @@
 </style>
 </head>
 <body>
-<h1>Claude 토큰 사용량 — 전체 기간</h1>
+<div class="header">
+  <h1 data-i18n="pageHeaderOverview">Claude Token Usage — All Time</h1>
+  <button class="lang-toggle" id="lang-toggle" onclick="CLAUDE_I18N.toggle()"></button>
+</div>
 <div class="nav">
-  <a href="dashboard.html">대시보드</a>
-  <a href="overview.html" class="active">전체 기간</a>
+  <a href="dashboard.html" data-i18n="navDashboard"></a>
+  <a href="overview.html" class="active" data-i18n="navOverview"></a>
 </div>
 
 <div class="sub" id="period-meta"></div>
 
 <div class="grid-stats">
   <div class="stat">
-    <div class="label">전체 누적</div>
+    <div class="label" data-i18n="statTotalCumulative"></div>
     <div class="val" id="s-total-tok">-</div>
     <div class="sub-val" id="s-total-cost"></div>
   </div>
   <div class="stat highlight">
-    <div class="label">월 평균</div>
+    <div class="label" data-i18n="statMonthlyAvg"></div>
     <div class="val" id="s-avg-tok">-</div>
     <div class="sub-val" id="s-avg-cost"></div>
   </div>
   <div class="stat">
-    <div class="label">가장 비싼 월</div>
+    <div class="label" data-i18n="statPeakMonth"></div>
     <div class="val month-tag" id="s-peak-month">-</div>
     <div class="sub-val" id="s-peak-detail"></div>
   </div>
   <div class="stat">
-    <div class="label">가장 적은 월</div>
+    <div class="label" data-i18n="statLowMonth"></div>
     <div class="val month-tag" id="s-low-month">-</div>
     <div class="sub-val" id="s-low-detail"></div>
   </div>
@@ -137,11 +162,11 @@
 
 <div class="grid-main">
   <div class="panel">
-    <h2>월별 추이 <span class="sub-h" id="trend-meta"></span></h2>
+    <h2><span data-i18n="panelMonthlyTrend"></span> <span class="sub-h" id="trend-meta"></span></h2>
     <canvas id="monthlyChart" height="160"></canvas>
   </div>
   <div class="panel">
-    <h2>전체 모델별 비중</h2>
+    <h2 data-i18n="panelAllModelBreakdown"></h2>
     <div style="height: 200px; display: flex; align-items: center; justify-content: center;">
       <canvas id="modelChart"></canvas>
     </div>
@@ -149,17 +174,17 @@
 </div>
 
 <div class="panel" style="margin-top: 16px;">
-  <h2>월별 상세</h2>
+  <h2 data-i18n="panelMonthlyDetail"></h2>
   <table>
     <thead>
       <tr>
-        <th>월</th>
-        <th class="num">총 토큰</th>
-        <th class="num">총 비용</th>
-        <th class="num">활동일</th>
-        <th class="num">일평균</th>
-        <th class="num">전월 대비</th>
-        <th>모델</th>
+        <th data-i18n="colMonth"></th>
+        <th class="num" data-i18n="colTotalTokens"></th>
+        <th class="num" data-i18n="statMCost"></th>
+        <th class="num" data-i18n="colActiveDays"></th>
+        <th class="num" data-i18n="colDailyAvg"></th>
+        <th class="num" data-i18n="colVsLastMonth"></th>
+        <th data-i18n="colModel"></th>
       </tr>
     </thead>
     <tbody id="monthlyTable"></tbody>
@@ -167,17 +192,13 @@
 </div>
 
 <script>
-const fmt = n => {
-  if (n == null || isNaN(n)) return '0';
-  n = Math.round(n);
-  if (n >= 1e8) {
-    const eok = n / 1e8;
-    return (eok >= 10 ? Math.round(eok).toLocaleString() : eok.toFixed(1)) + '억';
-  }
-  if (n >= 1e4) return Math.round(n / 1e4).toLocaleString() + '만';
-  return n.toLocaleString();
-};
-const fmtUSD = n => '$' + (n < 10 ? n.toFixed(2) : Math.round(n).toLocaleString());
+const I18N = window.CLAUDE_I18N;
+I18N.applyDOM();
+document.getElementById('lang-toggle').textContent = I18N.t('switchToLabel');
+document.getElementById('lang-toggle').title = I18N.t('switchToTitle');
+
+const fmt = n => I18N.fmt(n);
+const fmtUSD = n => I18N.fmtUSD(n);
 
 function modelShort(name) {
   if (name.includes('opus')) {
@@ -196,33 +217,33 @@ function modelShort(name) {
 }
 
 if (!window.CLAUDE_DATA) {
-  document.body.innerHTML = `<h1 style="color:#f85149">데이터 로드 실패</h1><pre>data.js를 찾을 수 없어요.\n\n터미널에서 먼저 실행:\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs</pre>`;
+  document.body.innerHTML = `<h1 style="color:#f85149">${I18N.t('errLoadFailed')}</h1><pre>${I18N.t('errDataMissing')}\n\n${I18N.t('errRunFirst')}\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs</pre>`;
 } else {
   const monthly = [...window.CLAUDE_DATA.monthly.monthly].sort((a, b) => a.month.localeCompare(b.month));
   const daily = window.CLAUDE_DATA.daily.daily;
   const todayMonth = new Date().toISOString().slice(0, 7);
 
-  // ---- 집계 ----
+  // ---- Aggregate ----
   const totalTok = monthly.reduce((s, m) => s + m.totalTokens, 0);
   const totalCost = monthly.reduce((s, m) => s + m.totalCost, 0);
   const n = monthly.length;
   const avgTok = n > 0 ? totalTok / n : 0;
   const avgCost = n > 0 ? totalCost / n : 0;
 
-  // 가장 비싼 / 적은 월 (현재 월은 진행 중이라 비교에서 제외)
+  // Most/least expensive month (current month is in progress -> excluded from comparison)
   const completed = monthly.filter(m => m.month !== todayMonth);
   const sortedByCost = [...completed].sort((a, b) => b.totalCost - a.totalCost);
   const peak = sortedByCost[0] || monthly[monthly.length - 1];
   const low = sortedByCost[sortedByCost.length - 1] || monthly[0];
 
   document.getElementById('period-meta').textContent =
-    `데이터 범위: ${monthly[0].month} ~ ${monthly[n - 1].month} · ${n}개월` +
-    (completed.length < n ? ` (현재 월 진행 중)` : '');
+    I18N.t('meta_overviewRange', monthly[0].month, monthly[n - 1].month, n) +
+    (completed.length < n ? I18N.t('currentMonthInProgress') : '');
 
   document.getElementById('s-total-tok').textContent = fmt(totalTok);
   document.getElementById('s-total-cost').textContent = fmtUSD(totalCost);
   document.getElementById('s-avg-tok').textContent = fmt(avgTok);
-  document.getElementById('s-avg-cost').textContent = `${fmtUSD(avgCost)} / 달`;
+  document.getElementById('s-avg-cost').textContent = `${fmtUSD(avgCost)}${I18N.t('avgCostSuffix')}`;
   if (peak) {
     document.getElementById('s-peak-month').textContent = peak.month;
     document.getElementById('s-peak-detail').textContent = `${fmt(peak.totalTokens)} · ${fmtUSD(peak.totalCost)}`;
@@ -232,9 +253,12 @@ if (!window.CLAUDE_DATA) {
     document.getElementById('s-low-detail').textContent = `${fmt(low.totalTokens)} · ${fmtUSD(low.totalCost)}`;
   }
 
-  // ---- 월별 추이 차트 ----
-  document.getElementById('trend-meta').textContent =
-    `· 막대=토큰 · 선=비용($) · 점선=월 평균`;
+  // ---- Monthly trend chart ----
+  document.getElementById('trend-meta').textContent = I18N.t('trendLegendNote');
+
+  const dsTokens = I18N.t('dsTotalTokens');
+  const dsCost = I18N.t('dsCost');
+  const dsAvg = I18N.t('dsMonthlyAvgTokens');
 
   new Chart(document.getElementById('monthlyChart'), {
     type: 'bar',
@@ -242,7 +266,7 @@ if (!window.CLAUDE_DATA) {
       labels: monthly.map(m => m.month),
       datasets: [
         {
-          label: '총 토큰',
+          label: dsTokens,
           data: monthly.map(m => m.totalTokens),
           backgroundColor: monthly.map(m => m.month === todayMonth ? '#f0a878' : '#d97757'),
           borderRadius: 4,
@@ -250,7 +274,7 @@ if (!window.CLAUDE_DATA) {
           order: 2,
         },
         {
-          label: '비용 환산 ($)',
+          label: dsCost,
           data: monthly.map(m => m.totalCost),
           type: 'line',
           borderColor: '#79c0ff',
@@ -260,7 +284,7 @@ if (!window.CLAUDE_DATA) {
           order: 1,
         },
         {
-          label: '월 평균 토큰',
+          label: dsAvg,
           data: monthly.map(() => avgTok),
           type: 'line',
           borderColor: 'rgba(139, 148, 158, 0.6)',
@@ -275,13 +299,13 @@ if (!window.CLAUDE_DATA) {
     options: {
       responsive: true,
       plugins: {
-        legend: { labels: { color: '#e6edf3', font: { size: 11 }, filter: item => item.text !== '월 평균 토큰' || true } },
+        legend: { labels: { color: '#e6edf3', font: { size: 11 } } },
         tooltip: {
           callbacks: {
             label: ctx => {
-              if (ctx.dataset.label === '총 토큰') return `토큰: ${fmt(ctx.raw)}`;
-              if (ctx.dataset.label === '비용 환산 ($)') return `비용: ${fmtUSD(ctx.raw)}`;
-              if (ctx.dataset.label === '월 평균 토큰') return `월 평균: ${fmt(ctx.raw)}`;
+              if (ctx.dataset.label === dsTokens) return I18N.t('tooltip_tokensLabel', fmt(ctx.raw));
+              if (ctx.dataset.label === dsCost) return I18N.t('tooltip_costLabel', fmtUSD(ctx.raw));
+              if (ctx.dataset.label === dsAvg) return I18N.t('tooltip_monthlyAvgLabel', fmt(ctx.raw));
               return ctx.formattedValue;
             }
           }
@@ -295,7 +319,7 @@ if (!window.CLAUDE_DATA) {
     },
   });
 
-  // ---- 전체 모델별 도넛 (모든 월 합산) ----
+  // ---- All-time model doughnut (summed across months) ----
   const modelTotals = new Map();
   for (const m of monthly) {
     for (const b of (m.modelBreakdowns || [])) {
@@ -332,12 +356,12 @@ if (!window.CLAUDE_DATA) {
     });
   }
 
-  // ---- 월별 상세 테이블 ----
+  // ---- Monthly detail table ----
   const tbody = document.getElementById('monthlyTable');
   const reversed = [...monthly].reverse();
   for (let i = 0; i < reversed.length; i++) {
     const m = reversed[i];
-    const prev = reversed[i + 1]; // 더 오래된 월 (전월)
+    const prev = reversed[i + 1]; // older month (previous)
     const monthDaily = daily.filter(d => d.date.startsWith(m.month));
     const activityDays = monthDaily.length;
     const dailyAvg = activityDays > 0 ? m.totalTokens / activityDays : 0;
@@ -353,13 +377,17 @@ if (!window.CLAUDE_DATA) {
       deltaHtml = `<span class="${up ? 'delta-up' : 'delta-down'}">${up ? '↑' : '↓'} ${Math.abs(pct).toFixed(0)}%</span>`;
     }
 
+    const isCurrent = m.month === todayMonth;
     const tr = document.createElement('tr');
-    if (m.month === todayMonth) tr.className = 'current-month';
+    if (isCurrent) tr.className = 'current-month';
+    const monthLabel = isCurrent
+      ? `${m.month}<span class="in-progress-tag">${I18N.t('inProgressTag')}</span>`
+      : m.month;
     tr.innerHTML = `
-      <td>${m.month}</td>
+      <td>${monthLabel}</td>
       <td class="num">${fmt(m.totalTokens)}</td>
       <td class="num">${fmtUSD(m.totalCost)}</td>
-      <td class="num">${activityDays}일</td>
+      <td class="num">${activityDays}${I18N.t('daysSuffix')}</td>
       <td class="num">${fmt(dailyAvg)}</td>
       <td class="num">${deltaHtml}</td>
       <td>${models}</td>

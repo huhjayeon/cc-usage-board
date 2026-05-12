@@ -1,0 +1,179 @@
+# cc-usage-board
+
+[한국어](README.md) · **English**
+
+A local dashboard that visualizes Claude Code token usage.
+
+It renders JSON exported by [ccusage](https://github.com/ryoppippi/ccusage)
+into a single HTML file with charts. The data update script is Node-based
+so it **runs on macOS, Linux, and Windows**. macOS users also get a
+SwiftBar plugin for at-a-glance menu bar stats.
+
+> No data is sent to any external server. The generated files
+> (`data*.json`, `data.js`) are listed in `.gitignore` so they will not
+> be committed by accident.
+
+## Bilingual UI
+
+A `KO / EN` toggle in the top right of each dashboard page switches the
+language instantly. Your choice is persisted in `localStorage`; on first
+visit, the dashboard picks up your browser language. Number units adapt
+to the locale as well (Korean uses `만/억`, English uses `K/M/B`).
+
+## Platform compatibility
+
+| Component | macOS | Linux | Windows |
+| --- | :---: | :---: | :---: |
+| `dashboard.html` (browser) | ✅ | ✅ | ✅ |
+| `update.mjs` (data refresh) | ✅ | ✅ | ✅ |
+| `update.sh` (convenience wrapper) | ✅ | ✅ | ❌ (call `node update.mjs` directly) |
+| SwiftBar plugin (menu bar) | ✅ | ❌ | ❌ |
+
+## What you get
+
+The top nav switches between two pages.
+
+### `dashboard.html` — Overview
+- **Stat cards**: today / yesterday / last 7 days / this month / all-time / plan usage
+- **Monthly trend**: total tokens + cost ($)
+- **Last 60 days** daily-tokens bar chart
+- **Activity heatmap**: last 90 days (GitHub style)
+- **Model breakdown** doughnut for the current month
+- **Last 30 days daily detail** table
+
+### `overview.html` — All Time
+- **Aggregate cards**: all-time total / **monthly average** (tokens+cost) / most expensive month / cheapest month
+- **Monthly trend chart**: bars (tokens) + line (cost) + dashed (monthly average)
+- **All-time model breakdown** doughnut (summed across months)
+- **Monthly detail table**: month / total tokens / total cost / active days / daily avg / vs prev month / models
+
+## Requirements
+
+| Tool | Notes |
+| --- | --- |
+| [Node.js](https://nodejs.org/) 18+ | Used via `npx` to run ccusage |
+| [Claude Code](https://docs.claude.com/claude-code) | ccusage reads its local logs from `~/.claude/` |
+| [jq](https://jqlang.github.io/jq/) (optional) | For the SwiftBar plugin. `brew install jq` |
+| [SwiftBar](https://swiftbar.app/) (optional, macOS) | For the menu bar plugin |
+
+## Install
+
+### macOS / Linux
+
+```bash
+git clone https://github.com/huhjayeon/cc-usage-board.git ~/claude-dashboard
+cd ~/claude-dashboard
+chmod +x update.sh update.mjs plugins/claude-usage.5m.sh
+./update.sh           # First data pull (npx fetches ccusage, ~30s–1m)
+open dashboard.html   # macOS. On Linux: xdg-open dashboard.html
+```
+
+### Windows (PowerShell)
+
+```powershell
+git clone https://github.com/huhjayeon/cc-usage-board.git $HOME\claude-dashboard
+cd $HOME\claude-dashboard
+node update.mjs       # First data pull
+start dashboard.html  # Opens in the default browser
+```
+
+On WSL, follow the macOS/Linux steps as-is.
+
+The very first run downloads ccusage via `npx`. You are ready once
+`data-daily.json`, `data-monthly.json`, `data-session.json`, and
+`data.js` appear in the folder.
+
+## Refreshing data
+
+The **Refresh** button in the dashboard only reloads the page. To pull
+fresh numbers, re-run the update script.
+
+```bash
+# macOS / Linux
+~/claude-dashboard/update.sh
+
+# Windows
+node $HOME\claude-dashboard\update.mjs
+```
+
+To refresh on a schedule:
+
+- macOS / Linux (cron):
+  ```
+  */5 * * * * $HOME/claude-dashboard/update.sh >/dev/null 2>&1
+  ```
+- Windows (Task Scheduler): create a "Start a program" task with
+  `node` as the program, `update.mjs` as the argument, and
+  `%USERPROFILE%\claude-dashboard` as the working directory.
+
+## SwiftBar plugin (macOS only)
+
+Displays today's tokens/cost in the menu bar and auto-refreshes every
+5 minutes. The leading emoji reflects workload intensity
+(💤 / 🟢 / 🟡 / 🟠 / 🔥).
+
+```bash
+brew install --cask swiftbar
+brew install jq
+
+ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
+      ~/Library/Application\ Support/SwiftBar/Plugins/claude-usage.5m.sh
+```
+
+Menu entries:
+- Today / yesterday / last 7 days / this month — tokens · cost
+- **Open dashboard** — opens `dashboard.html` in the browser
+- **Refresh now** — runs `update.sh` immediately
+- **Open folder** — opens the project folder
+
+## File guide
+
+| File | Role |
+| --- | --- |
+| `dashboard.html` | Main UI — overview (Chart.js via CDN) |
+| `overview.html` | All Time — monthly trend / average / model aggregation |
+| `i18n.js` | Korean/English strings + locale-aware number formatter |
+| `update.mjs` | Calls ccusage → writes `data*.json` / `data.js` (cross-platform) |
+| `update.sh` | Convenience wrapper for macOS/Linux that calls `update.mjs` |
+| `plugins/claude-usage.5m.sh` | SwiftBar menu bar plugin (macOS only) |
+| `data.js`, `data-*.json` | Generated data (gitignored) |
+
+## Troubleshooting
+
+**`command not found: node` / `npx`**
+Node.js isn't installed. Use the [official installer](https://nodejs.org/),
+`brew install node` on macOS, or `winget install OpenJS.NodeJS` on Windows.
+
+**`update.mjs` produces an empty dataset**
+You have no Claude Code local logs yet. Use Claude Code at least once so
+records pile up in `~/.claude/` (macOS/Linux) or `%USERPROFILE%\.claude\`
+(Windows). See the
+[ccusage README](https://github.com/ryoppippi/ccusage) for what it requires.
+
+**Charts are empty in the dashboard**
+- Confirm `data.js` was generated.
+- Open the browser console (⌥⌘I / F12) and check `window.CLAUDE_DATA`.
+- Some browsers block `<script src="data.js">` over `file://`. Serve
+  the folder over HTTP instead:
+  ```bash
+  python3 -m http.server 8000
+  # Then open http://localhost:8000/dashboard.html
+  ```
+
+**The language toggle doesn't stick**
+Some browsers block `localStorage` over `file://`. Serving the folder
+via a local server (see above) fixes it.
+
+**SwiftBar plugin only shows `🤖 jq needed`**
+`brew install jq`, then choose "Refresh All" from the SwiftBar menu.
+
+**PowerShell execution policy error on Windows**
+`update.mjs` is a Node script, not a PowerShell script, so execution
+policy doesn't apply. Invoke it as `node update.mjs`.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+Internally calls [ccusage](https://github.com/ryoppippi/ccusage) (MIT).
+Charts powered by [Chart.js](https://www.chartjs.org/) (MIT).

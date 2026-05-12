@@ -2,9 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Claude Usage Dashboard</title>
+<title data-i18n="pageTitleDashboard">Claude Usage Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="i18n.js"></script>
 <script src="data.js"></script>
 <style>
   :root {
@@ -27,6 +28,13 @@
     color: var(--text);
     padding: 24px;
   }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
   h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
   .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
   .sub button {
@@ -40,6 +48,20 @@
     margin-left: 8px;
   }
   .sub button:hover { border-color: var(--accent); }
+
+  .lang-toggle {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .lang-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
   .nav { display: flex; gap: 4px; margin-bottom: 16px; }
   .nav a {
@@ -138,55 +160,63 @@
 </style>
 </head>
 <body>
-<h1>Claude 토큰 사용량 대시보드</h1>
+<div class="header">
+  <h1 data-i18n="pageHeaderDashboard">Claude Token Usage Dashboard</h1>
+  <button class="lang-toggle" id="lang-toggle" onclick="CLAUDE_I18N.toggle()"></button>
+</div>
 <div class="nav">
-  <a href="dashboard.html" class="active">대시보드</a>
-  <a href="overview.html">전체 기간</a>
+  <a href="dashboard.html" class="active" data-i18n="navDashboard"></a>
+  <a href="overview.html" data-i18n="navOverview"></a>
 </div>
 <div class="sub">
   <span id="updated"></span>
-  <button onclick="location.reload()">🔄 새로고침</button>
-  <span style="margin-left: 12px; color: var(--muted); font-size: 11px;">데이터 갱신: <code>./update.sh</code> (macOS/Linux) 또는 <code>node update.mjs</code> (Windows)</span>
+  <button id="refresh-btn" onclick="location.reload()" data-i18n="refresh"></button>
+  <span style="margin-left: 12px; color: var(--muted); font-size: 11px;">
+    <span data-i18n="updateHelpPrefix"></span>
+    <code>./update.sh</code> <span data-i18n="updateHelpMac"></span>
+    <span data-i18n="updateHelpOr"></span>
+    <code>node update.mjs</code> <span data-i18n="updateHelpWin"></span>
+  </span>
 </div>
 
 <div class="grid-stats">
-  <div class="stat"><div class="label">오늘</div><div class="val" id="s-today">-</div><div class="sub-val" id="s-today-cost"></div><div class="delta" id="s-today-delta"></div></div>
-  <div class="stat"><div class="label">어제</div><div class="val" id="s-yesterday">-</div><div class="sub-val" id="s-yesterday-cost"></div></div>
-  <div class="stat"><div class="label">최근 7일</div><div class="val" id="s-week">-</div><div class="sub-val" id="s-week-cost"></div><div class="delta" id="s-week-delta"></div></div>
-  <div class="stat"><div class="label">이번 달</div><div class="val" id="s-month">-</div><div class="sub-val" id="s-month-cost"></div><div class="delta" id="s-month-delta"></div></div>
-  <div class="stat"><div class="label">전체 누적</div><div class="val" id="s-total">-</div><div class="sub-val" id="s-total-cost"></div></div>
-  <div class="stat highlight"><div class="label">플랜 대비 (이번 달) <span id="s-plan-name" style="color:var(--muted)"></span></div><div class="val" id="s-plan-ratio">-</div><div class="sub-val" id="s-plan-detail"></div><div class="bar"><div id="s-plan-bar" style="width:0%"></div></div></div>
+  <div class="stat"><div class="label" data-i18n="statToday"></div><div class="val" id="s-today">-</div><div class="sub-val" id="s-today-cost"></div><div class="delta" id="s-today-delta"></div></div>
+  <div class="stat"><div class="label" data-i18n="statYesterday"></div><div class="val" id="s-yesterday">-</div><div class="sub-val" id="s-yesterday-cost"></div></div>
+  <div class="stat"><div class="label" data-i18n="statWeek"></div><div class="val" id="s-week">-</div><div class="sub-val" id="s-week-cost"></div><div class="delta" id="s-week-delta"></div></div>
+  <div class="stat"><div class="label" data-i18n="statMonth"></div><div class="val" id="s-month">-</div><div class="sub-val" id="s-month-cost"></div><div class="delta" id="s-month-delta"></div></div>
+  <div class="stat"><div class="label" data-i18n="statTotal"></div><div class="val" id="s-total">-</div><div class="sub-val" id="s-total-cost"></div></div>
+  <div class="stat highlight"><div class="label"><span data-i18n="statPlan"></span> <span id="s-plan-name" style="color:var(--muted)"></span></div><div class="val" id="s-plan-ratio">-</div><div class="sub-val" id="s-plan-detail"></div><div class="bar"><div id="s-plan-bar" style="width:0%"></div></div></div>
 </div>
 
 <div class="grid-main" style="grid-template-columns: 1fr 1fr;">
   <div class="panel">
-    <h2>월별 추이</h2>
+    <h2 data-i18n="panelMonthlyTrend"></h2>
     <canvas id="monthlyChart" height="160"></canvas>
   </div>
   <div class="panel">
-    <h2>최근 60일 일별 토큰 <span class="sub-h" id="daily-meta"></span></h2>
+    <h2><span data-i18n="panelDaily60"></span> <span class="sub-h" id="daily-meta"></span></h2>
     <canvas id="dailyChart" height="160"></canvas>
   </div>
 </div>
 
 <div class="grid-main" style="grid-template-columns: 7fr 3fr;">
   <div class="panel">
-    <h2>활동 히트맵 <span class="sub-h">최근 90일 · GitHub 스타일</span></h2>
+    <h2><span data-i18n="panelHeatmap"></span> <span class="sub-h" data-i18n="panelHeatmapSub"></span></h2>
     <div class="heatmap-wrap">
       <div id="heatmap"></div>
     </div>
     <div class="heatmap-legend">
-      <span>적음</span>
+      <span data-i18n="heatmapLess"></span>
       <div class="cell"></div>
       <div class="cell l1"></div>
       <div class="cell l2"></div>
       <div class="cell l3"></div>
       <div class="cell l4"></div>
-      <span>많음</span>
+      <span data-i18n="heatmapMore"></span>
     </div>
   </div>
   <div class="panel">
-    <h2>이번 달 모델별 비중</h2>
+    <h2 data-i18n="panelModelBreakdownThisMonth"></h2>
     <div style="height: 200px; display: flex; align-items: center; justify-content: center;">
       <canvas id="modelChart"></canvas>
     </div>
@@ -194,17 +224,17 @@
 </div>
 
 <div class="panel" style="margin-top: 16px;">
-  <h2>최근 30일 일별 상세</h2>
+  <h2 data-i18n="panelRecent30"></h2>
   <table>
     <thead>
       <tr>
-        <th>날짜</th>
-        <th>요일</th>
-        <th>모델</th>
-        <th class="num">총 토큰</th>
-        <th class="num">Output</th>
-        <th class="num">Cache Read</th>
-        <th class="num">비용 환산</th>
+        <th data-i18n="colDate"></th>
+        <th data-i18n="colDay"></th>
+        <th data-i18n="colModel"></th>
+        <th class="num" data-i18n="colTotalTokens"></th>
+        <th class="num" data-i18n="colOutput"></th>
+        <th class="num" data-i18n="colCacheRead"></th>
+        <th class="num" data-i18n="colCost"></th>
       </tr>
     </thead>
     <tbody id="dailyTable"></tbody>
@@ -214,24 +244,18 @@
 <div id="tooltip"></div>
 
 <script>
-// 본인 플랜에 맞게 수정: Pro=20, Max 5x=100, Max 20x=200
+// Adjust to your plan: Pro=20, Max 5x=100, Max 20x=200
 const PLAN_PRICE_USD = 200;
 const PLAN_NAME = 'Max 20x';
 
-const fmt = n => {
-  if (n == null || isNaN(n)) return '0';
-  n = Math.round(n);
-  if (n >= 1e8) {
-    const eok = n / 1e8;
-    return (eok >= 10 ? Math.round(eok).toLocaleString() : eok.toFixed(1)) + '억';
-  }
-  if (n >= 1e4) {
-    return Math.round(n / 1e4).toLocaleString() + '만';
-  }
-  return n.toLocaleString();
-};
-const fmtUSD = n => '$' + (n < 10 ? n.toFixed(2) : Math.round(n).toLocaleString());
-const dow = ['일','월','화','수','목','금','토'];
+const I18N = window.CLAUDE_I18N;
+I18N.applyDOM();
+document.getElementById('lang-toggle').textContent = I18N.t('switchToLabel');
+document.getElementById('lang-toggle').title = I18N.t('switchToTitle');
+
+const fmt = n => I18N.fmt(n);
+const fmtUSD = n => I18N.fmtUSD(n);
+const dow = I18N.dow();
 
 function modelShort(name) {
   if (name.includes('opus')) {
@@ -251,7 +275,7 @@ function modelShort(name) {
 
 function load() {
   if (!window.CLAUDE_DATA) {
-    throw new Error('data.js를 찾을 수 없어요. 먼저 ./update.sh (macOS/Linux) 또는 node update.mjs (Windows) 를 실행하세요.');
+    throw new Error(I18N.t('errDataMissing'));
   }
   return {
     daily: window.CLAUDE_DATA.daily.daily,
@@ -275,7 +299,7 @@ function render({ daily, monthly }) {
   const monthStart = today.slice(0, 7);
 
   document.getElementById('updated').textContent =
-    `최종 업데이트: ${new Date().toLocaleString('ko-KR')} · 데이터 범위: ${daily[0]?.date} ~ ${daily.at(-1)?.date}`;
+    `${I18N.t('lastUpdated')}: ${new Date().toLocaleString(I18N.locale())} · ${I18N.t('dataRange')}: ${daily[0]?.date} ~ ${daily.at(-1)?.date}`;
 
   // ---- Stats ----
   const todayD = findByDate(daily, today);
@@ -288,7 +312,6 @@ function render({ daily, monthly }) {
     d.setMonth(d.getMonth() - 1);
     return d.toISOString().slice(0, 7);
   })();
-  const prevMonth = monthly.find(m => m.month === prevMonthStr);
   const total = monthly.reduce((s, m) => ({ tok: s.tok + m.totalTokens, cost: s.cost + m.totalCost }), { tok: 0, cost: 0 });
 
   const sumTok = arr => arr.reduce((s, d) => s + d.totalTokens, 0);
@@ -304,12 +327,12 @@ function render({ daily, monthly }) {
   setStat('month', thisMonth?.totalTokens || 0, thisMonth?.totalCost || 0);
   setStat('total', total.tok, total.cost);
 
-  // 플랜 대비
+  // Plan ratio
   const monthCost = thisMonth?.totalCost || 0;
   const ratio = (monthCost / PLAN_PRICE_USD) * 100;
   document.getElementById('s-plan-name').textContent = `· ${PLAN_NAME} $${PLAN_PRICE_USD}`;
   document.getElementById('s-plan-ratio').textContent = Math.round(ratio) + '%';
-  document.getElementById('s-plan-detail').textContent = `${(monthCost/PLAN_PRICE_USD).toFixed(1)}배 사용 · $${Math.round(monthCost)}`;
+  document.getElementById('s-plan-detail').textContent = `${(monthCost/PLAN_PRICE_USD).toFixed(1)}x · $${Math.round(monthCost)}`;
   const barWidth = Math.min(ratio, 100);
   const bar = document.getElementById('s-plan-bar');
   bar.style.width = barWidth + '%';
@@ -320,14 +343,14 @@ function render({ daily, monthly }) {
     if (!prev) return '';
     const pct = ((cur - prev) / prev) * 100;
     const sign = pct >= 0 ? '↑' : '↓';
-    return `<span class="${pct >= 0 ? 'up' : 'down'}">${sign} ${Math.abs(pct).toFixed(0)}% vs 어제</span>`;
+    return `<span class="${pct >= 0 ? 'up' : 'down'}">${sign} ${Math.abs(pct).toFixed(0)}% ${I18N.t('deltaVsYesterday')}</span>`;
   };
   document.getElementById('s-today-delta').innerHTML =
     todayD && yestD ? delta(todayD.totalTokens, yestD.totalTokens) : '';
   const week7 = sumTok(last7), prevWeek7 = sumTok(prev7);
   document.getElementById('s-week-delta').innerHTML =
-    prevWeek7 ? `<span class="${week7 >= prevWeek7 ? 'up' : 'down'}">${week7 >= prevWeek7 ? '↑' : '↓'} ${Math.abs(((week7-prevWeek7)/prevWeek7)*100).toFixed(0)}% vs 직전 7일</span>` : '';
-  // MTD 비교: 같은 기간 (예: 5/1~5/11 vs 4/1~4/11)
+    prevWeek7 ? `<span class="${week7 >= prevWeek7 ? 'up' : 'down'}">${week7 >= prevWeek7 ? '↑' : '↓'} ${Math.abs(((week7-prevWeek7)/prevWeek7)*100).toFixed(0)}% ${I18N.t('deltaVsPrev7')}</span>` : '';
+  // MTD comparison: same range (e.g. 5/1~5/11 vs 4/1~4/11)
   const todayDate = new Date(today);
   const todayDay = todayDate.getDate();
   const sumRange = (yyyymm, fromDay, toDay) => daily
@@ -343,14 +366,13 @@ function render({ daily, monthly }) {
     const up = mtdNow >= mtdPrev;
     const pct = Math.abs(((mtdNow - mtdPrev) / mtdPrev) * 100).toFixed(0);
     document.getElementById('s-month-delta').innerHTML =
-      `<span class="${up ? 'up' : 'down'}">${up ? '↑' : '↓'} ${pct}% vs 지난달 1~${todayDay}일</span>`;
+      `<span class="${up ? 'up' : 'down'}">${up ? '↑' : '↓'} ${pct}% ${I18N.t('deltaVsLastMonth', todayDay)}</span>`;
   }
 
   // ---- Daily chart (last 60 days) ----
   const since60 = dateOffset(-60);
   const last60 = daily.filter(d => d.date >= since60);
   const last60Map = new Map(last60.map(d => [d.date, d]));
-  // Fill gaps with 0
   const filled60 = [];
   for (let i = 60; i >= 0; i--) {
     const ds = dateOffset(-i);
@@ -359,14 +381,14 @@ function render({ daily, monthly }) {
   }
   const peak = Math.max(...filled60.map(d => d.tokens));
   const avg60 = filled60.reduce((s, d) => s + d.tokens, 0) / filled60.length;
-  document.getElementById('daily-meta').textContent = `· 일평균 ${fmt(avg60)} · 피크 ${fmt(peak)}`;
+  document.getElementById('daily-meta').textContent = I18N.t('meta_dailyStats', fmt(avg60), fmt(peak));
 
   new Chart(document.getElementById('dailyChart'), {
     type: 'bar',
     data: {
       labels: filled60.map(d => d.date.slice(5)),
       datasets: [{
-        label: '총 토큰',
+        label: I18N.t('dsTotalTokens'),
         data: filled60.map(d => d.tokens),
         backgroundColor: filled60.map(d => d.tokens > avg60 * 1.5 ? '#f0a878' : '#d97757'),
         borderRadius: 2,
@@ -380,7 +402,7 @@ function render({ daily, monthly }) {
           callbacks: {
             label: ctx => {
               const d = filled60[ctx.dataIndex];
-              return [`${fmt(d.tokens)} 토큰`, `${fmtUSD(d.cost)} 환산`];
+              return [I18N.t('tooltip_tokens', fmt(d.tokens)), I18N.t('tooltip_cost', fmtUSD(d.cost))];
             }
           }
         }
@@ -432,10 +454,8 @@ function render({ daily, monthly }) {
   // ---- Heatmap (90 days) ----
   const heat = document.getElementById('heatmap');
   const tooltip = document.getElementById('tooltip');
-  // Start from 90 days ago, but align to Sunday (column start)
   const start = new Date();
   start.setDate(start.getDate() - 90);
-  // Roll back to Sunday
   start.setDate(start.getDate() - start.getDay());
   const dailyMap = new Map(daily.map(d => [d.date, d]));
   const max90 = Math.max(...daily.filter(d => d.date >= dateOffset(-90)).map(d => d.totalTokens), 1);
@@ -455,7 +475,7 @@ function render({ daily, monthly }) {
     }
     const cell = document.createElement('div');
     cell.className = 'cell' + (level ? ' l' + level : '');
-    cell.dataset.tip = `${ds} (${dow[d.getDay()]}): ${fmt(tok)} 토큰 · ${fmtUSD(data?.totalCost || 0)}`;
+    cell.dataset.tip = `${ds} (${dow[d.getDay()]}): ${I18N.t('tooltip_tokens', fmt(tok))} · ${fmtUSD(data?.totalCost || 0)}`;
     cell.addEventListener('mouseenter', e => {
       tooltip.textContent = e.target.dataset.tip;
       tooltip.style.display = 'block';
@@ -475,14 +495,14 @@ function render({ daily, monthly }) {
       labels: monthly.map(m => m.month),
       datasets: [
         {
-          label: '총 토큰',
+          label: I18N.t('dsTotalTokens'),
           data: monthly.map(m => m.totalTokens),
           backgroundColor: '#d97757',
           borderRadius: 4,
           yAxisID: 'y',
         },
         {
-          label: '비용 환산 ($)',
+          label: I18N.t('dsCost'),
           data: monthly.map(m => m.totalCost),
           type: 'line',
           borderColor: '#79c0ff',
@@ -531,7 +551,7 @@ function render({ daily, monthly }) {
 try {
   render(load());
 } catch (err) {
-  document.body.innerHTML = `<h1 style="color:#f85149">데이터 로드 실패</h1><pre>${err.message}\n\n터미널에서 먼저 실행:\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs</pre>`;
+  document.body.innerHTML = `<h1 style="color:#f85149">${I18N.t('errLoadFailed')}</h1><pre>${err.message}\n\n${I18N.t('errRunFirst')}\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs</pre>`;
 }
 </script>
 </body>

@@ -1,5 +1,7 @@
 # cc-usage-board
 
+**한국어** · [English](README.en.md)
+
 Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 
 [ccusage](https://github.com/ryoppippi/ccusage)가 내보낸 JSON을 단일 HTML
@@ -9,6 +11,12 @@ Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 
 > 외부 서버에 데이터를 보내지 않는다. 생성된 데이터(`data*.json`,
 > `data.js`)는 `.gitignore`에 포함되어 있어 실수로 커밋되지 않는다.
+
+## 다국어 지원
+
+대시보드 우상단의 `KO / EN` 토글로 한국어/영어를 즉시 전환할 수 있다.
+선택한 언어는 브라우저 `localStorage`에 저장되며, 처음 방문 시에는 브라우저
+언어 설정을 따른다. 숫자 단위도 함께 바뀐다 (한국어 `만/억`, 영어 `K/M/B`).
 
 ## 플랫폼 호환성
 
@@ -119,6 +127,7 @@ ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
 | --- | --- |
 | `dashboard.html` | 메인 UI — 전체 개요 (Chart.js CDN) |
 | `overview.html` | 전체 기간 — 월별 추이/평균/모델 집계 |
+| `i18n.js` | 한국어/영어 번역 + 숫자 포맷터 |
 | `update.mjs` | ccusage 호출 → `data*.json` / `data.js` 생성 (크로스플랫폼) |
 | `update.sh` | macOS/Linux용 편의 래퍼. 내부적으로 `update.mjs` 호출 |
 | `plugins/claude-usage.5m.sh` | SwiftBar 메뉴바 플러그인 (macOS 전용) |
@@ -145,6 +154,10 @@ Claude Code 로컬 로그가 없는 것. Claude Code를 한 번이라도 써야
   python3 -m http.server 8000
   # 브라우저에서 http://localhost:8000/dashboard.html
   ```
+
+**언어 토글이 동작하지 않는다**
+`file://` 환경에서 `localStorage`를 막는 브라우저가 있다. 위 트러블슈팅과
+동일하게 로컬 서버로 띄워서 접속하면 정상 동작한다.
 
 **SwiftBar 플러그인에 `🤖 jq 필요`만 보인다**
 `brew install jq` 후 SwiftBar 메뉴에서 "Refresh All".

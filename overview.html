@@ -258,8 +258,23 @@ function modelShort(name) {
   return { label: name, cls: '' };
 }
 
+function renderError(title, message) {
+  document.body.replaceChildren();
+  const h1 = document.createElement('h1');
+  h1.style.color = '#f85149';
+  h1.textContent = title;
+  const pre = document.createElement('pre');
+  pre.textContent = message + '\n\n' + I18N.t('errRunFirst') + '\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs';
+  document.body.append(h1, pre);
+}
+
 if (!window.CLAUDE_DATA) {
-  document.body.innerHTML = `<h1 style="color:#f85149">${I18N.t('errLoadFailed')}</h1><pre>${I18N.t('errDataMissing')}\n\n${I18N.t('errRunFirst')}\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs</pre>`;
+  renderError(I18N.t('errLoadFailed'), I18N.t('errDataMissing'));
+} else if (
+  !window.CLAUDE_DATA.monthly?.monthly?.length ||
+  !window.CLAUDE_DATA.daily?.daily?.length
+) {
+  renderError(I18N.t('errLoadFailed'), I18N.t('errEmptyData'));
 } else {
   const monthly = [...window.CLAUDE_DATA.monthly.monthly].sort((a, b) => a.month.localeCompare(b.month));
   const daily = window.CLAUDE_DATA.daily.daily;

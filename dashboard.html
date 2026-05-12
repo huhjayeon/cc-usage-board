@@ -548,10 +548,20 @@ function render({ daily, monthly }) {
   }
 }
 
+function renderError(title, message) {
+  document.body.replaceChildren();
+  const h1 = document.createElement('h1');
+  h1.style.color = '#f85149';
+  h1.textContent = title;
+  const pre = document.createElement('pre');
+  pre.textContent = message + '\n\n' + I18N.t('errRunFirst') + '\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs';
+  document.body.append(h1, pre);
+}
+
 try {
   render(load());
 } catch (err) {
-  document.body.innerHTML = `<h1 style="color:#f85149">${I18N.t('errLoadFailed')}</h1><pre>${err.message}\n\n${I18N.t('errRunFirst')}\n  macOS/Linux:  ./update.sh\n  Windows:      node update.mjs</pre>`;
+  renderError(I18N.t('errLoadFailed'), err.message);
 }
 </script>
 </body>

@@ -5,28 +5,11 @@
 <title data-i18n="pageTitleOverview">Claude Usage · All Time</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="i18n.js"></script>
+<script src="shared.js"></script>
 <script src="data.js"></script>
+<link rel="stylesheet" href="styles.css">
 <style>
-  :root {
-    --bg: #0d1117;
-    --panel: #161b22;
-    --panel-2: #1c2128;
-    --border: #30363d;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --accent: #d97757;
-    --accent-2: #f0a878;
-    --good: #3fb950;
-    --warn: #d29922;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Pretendard', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding: 14px 18px;
-  }
+  body { padding: 14px 18px; }
   .header {
     display: flex;
     justify-content: space-between;
@@ -114,8 +97,6 @@
     position: relative;
   }
 
-  canvas { max-width: 100%; }
-
   .table-wrap { max-height: 220px; overflow-y: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
   th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }
@@ -135,9 +116,6 @@
     margin-right: 2px;
     color: var(--muted);
   }
-  .model-pill.opus { color: #f0a878; border-color: #5c3a2e; }
-  .model-pill.sonnet { color: #79c0ff; border-color: #2c4a6e; }
-  .model-pill.haiku { color: #56d364; border-color: #1f5028; }
 
   .delta-up { color: var(--good); font-size: 10px; }
   .delta-down { color: var(--warn); font-size: 10px; }
@@ -241,22 +219,7 @@ document.getElementById('lang-toggle').title = I18N.t('switchToTitle');
 
 const fmt = n => I18N.fmt(n);
 const fmtUSD = n => I18N.fmtUSD(n);
-
-function modelShort(name) {
-  if (name.includes('opus')) {
-    const m = name.match(/opus-(\d+-\d+)/);
-    return { label: 'Opus ' + (m ? m[1].replace('-','.') : ''), cls: 'opus' };
-  }
-  if (name.includes('sonnet')) {
-    const m = name.match(/sonnet-(\d+-\d+)/);
-    return { label: 'Sonnet ' + (m ? m[1].replace('-','.') : ''), cls: 'sonnet' };
-  }
-  if (name.includes('haiku')) {
-    const m = name.match(/haiku-(\d+-\d+)/);
-    return { label: 'Haiku ' + (m ? m[1].replace('-','.') : ''), cls: 'haiku' };
-  }
-  return { label: name, cls: '' };
-}
+// modelShort() and CHART_COLORS are provided by shared.js
 
 function renderError(title, message) {
   document.body.replaceChildren();
@@ -287,11 +250,13 @@ if (!window.CLAUDE_DATA) {
   const avgTok = n > 0 ? totalTok / n : 0;
   const avgCost = n > 0 ? totalCost / n : 0;
 
-  // Most/least expensive month (current month is in progress -> excluded from comparison)
+  // Most/least expensive month — current month is in progress so it's excluded
+  // from comparison. peak requires >=1 completed month, low requires >=2 (so it
+  // can be distinct from peak).
   const completed = monthly.filter(m => m.month !== todayMonth);
   const sortedByCost = [...completed].sort((a, b) => b.totalCost - a.totalCost);
-  const peak = sortedByCost[0] || monthly[monthly.length - 1];
-  const low = sortedByCost[sortedByCost.length - 1] || monthly[0];
+  const peak = completed.length >= 1 ? sortedByCost[0] : null;
+  const low = completed.length >= 2 ? sortedByCost[sortedByCost.length - 1] : null;
 
   document.getElementById('period-meta').textContent =
     I18N.t('meta_overviewRange', monthly[0].month, monthly[n - 1].month, n) +
@@ -301,14 +266,17 @@ if (!window.CLAUDE_DATA) {
   document.getElementById('s-total-cost').textContent = fmtUSD(totalCost);
   document.getElementById('s-avg-tok').textContent = fmt(avgTok);
   document.getElementById('s-avg-cost').textContent = `${fmtUSD(avgCost)}${I18N.t('avgCostSuffix')}`;
-  if (peak) {
-    document.getElementById('s-peak-month').textContent = peak.month;
-    document.getElementById('s-peak-detail').textContent = `${fmt(peak.totalTokens)} · ${fmtUSD(peak.totalCost)}`;
-  }
-  if (low) {
-    document.getElementById('s-low-month').textContent = low.month;
-    document.getElementById('s-low-detail').textContent = `${fmt(low.totalTokens)} · ${fmtUSD(low.totalCost)}`;
-  }
+  const renderMonthStat = (idPrefix, m) => {
+    if (m) {
+      document.getElementById(idPrefix + '-month').textContent = m.month;
+      document.getElementById(idPrefix + '-detail').textContent = `${fmt(m.totalTokens)} · ${fmtUSD(m.totalCost)}`;
+    } else {
+      document.getElementById(idPrefix + '-month').textContent = '—';
+      document.getElementById(idPrefix + '-detail').textContent = I18N.t('insufficientData');
+    }
+  };
+  renderMonthStat('s-peak', peak);
+  renderMonthStat('s-low', low);
 
   // ---- Monthly trend chart ----
   document.getElementById('trend-meta').textContent = I18N.t('trendLegendNote');
@@ -393,7 +361,7 @@ if (!window.CLAUDE_DATA) {
         labels: modelEntries.map(([name]) => modelShort(name).label),
         datasets: [{
           data: modelEntries.map(([, v]) => v),
-          backgroundColor: ['#d97757', '#79c0ff', '#56d364', '#f0a878', '#bc8cff', '#8b949e'],
+          backgroundColor: CHART_COLORS,
           borderColor: '#161b22',
           borderWidth: 2,
         }],
@@ -522,14 +490,13 @@ if (!window.CLAUDE_DATA) {
 
   // ---- Model share by month (stacked bar) ----
   const allModelNames = [...modelTotals.keys()].sort((a, b) => modelTotals.get(b) - modelTotals.get(a));
-  const stackColors = ['#d97757', '#79c0ff', '#56d364', '#f0a878', '#bc8cff', '#8b949e'];
   const stackDatasets = allModelNames.map((name, idx) => ({
     label: modelShort(name).label,
     data: monthly.map(m => {
       const b = (m.modelBreakdowns || []).find(x => x.modelName === name);
       return b ? b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens : 0;
     }),
-    backgroundColor: stackColors[idx % stackColors.length],
+    backgroundColor: CHART_COLORS[idx % CHART_COLORS.length],
     borderRadius: 2,
   }));
 

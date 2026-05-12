@@ -6,28 +6,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="i18n.js"></script>
+<script src="shared.js"></script>
 <script src="data.js"></script>
+<link rel="stylesheet" href="styles.css">
 <style>
-  :root {
-    --bg: #0d1117;
-    --panel: #161b22;
-    --panel-2: #1c2128;
-    --border: #30363d;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --accent: #d97757;
-    --accent-2: #f0a878;
-    --good: #3fb950;
-    --warn: #d29922;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Pretendard', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding: 24px;
-  }
+  body { padding: 24px; }
   .header {
     display: flex;
     justify-content: space-between;
@@ -124,8 +107,6 @@
   .heatmap-legend { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; margin-top: 8px; justify-content: flex-end; }
   .heatmap-legend .cell { width: 10px; height: 10px; }
 
-  canvas { max-width: 100%; }
-
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
   th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; }
@@ -142,9 +123,6 @@
     margin-right: 3px;
     color: var(--muted);
   }
-  .model-pill.opus { color: #f0a878; border-color: #5c3a2e; }
-  .model-pill.sonnet { color: #79c0ff; border-color: #2c4a6e; }
-  .model-pill.haiku { color: #56d364; border-color: #1f5028; }
 
   #tooltip {
     position: fixed;
@@ -256,22 +234,7 @@ document.getElementById('lang-toggle').title = I18N.t('switchToTitle');
 const fmt = n => I18N.fmt(n);
 const fmtUSD = n => I18N.fmtUSD(n);
 const dow = I18N.dow();
-
-function modelShort(name) {
-  if (name.includes('opus')) {
-    const m = name.match(/opus-(\d+-\d+)/);
-    return { label: 'Opus ' + (m ? m[1].replace('-','.') : ''), cls: 'opus' };
-  }
-  if (name.includes('sonnet')) {
-    const m = name.match(/sonnet-(\d+-\d+)/);
-    return { label: 'Sonnet ' + (m ? m[1].replace('-','.') : ''), cls: 'sonnet' };
-  }
-  if (name.includes('haiku')) {
-    const m = name.match(/haiku-(\d+-\d+)/);
-    return { label: 'Haiku ' + (m ? m[1].replace('-','.') : ''), cls: 'haiku' };
-  }
-  return { label: name, cls: '' };
-}
+// modelShort() is provided by shared.js
 
 function load() {
   if (!window.CLAUDE_DATA) {
@@ -431,7 +394,7 @@ function render({ daily, monthly }) {
         labels: breakdowns.map(b => modelShort(b.modelName).label),
         datasets: [{
           data: breakdowns.map(modelTokens),
-          backgroundColor: ['#d97757', '#79c0ff', '#56d364', '#f0a878', '#bc8cff'],
+          backgroundColor: CHART_COLORS.slice(0, 5),
           borderColor: '#161b22',
           borderWidth: 2,
         }],

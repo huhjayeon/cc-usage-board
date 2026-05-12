@@ -1,0 +1,31 @@
+/* styles.css — shared design tokens and base styles for all dashboard pages.
+   Page-specific layout (grid columns, paddings, font sizes) stays inline in each HTML. */
+
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #1c2128;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --accent: #d97757;
+  --accent-2: #f0a878;
+  --good: #3fb950;
+  --warn: #d29922;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Pretendard', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+canvas { max-width: 100%; }
+
+/* Model pill — variant colors are shared; sizing/padding stays page-specific */
+.model-pill.opus { color: #f0a878; border-color: #5c3a2e; }
+.model-pill.sonnet { color: #79c0ff; border-color: #2c4a6e; }
+.model-pill.haiku { color: #56d364; border-color: #1f5028; }

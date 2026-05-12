@@ -157,7 +157,7 @@ MONTH_COST=$($JQ -r --arg m "$MONTH" '[.daily[] | select(.date | startswith($m))
 TODAY_TOK=${TODAY_TOK:-0}
 TODAY_COST=${TODAY_COST:-0}
 
-# Menu bar text: today's tokens with workload-intensity emoji.
+# Menu bar text: today's tokens + cost with workload-intensity emoji.
 INTENSITY="🟢"
 if   awk "BEGIN{exit !($TODAY_TOK > 50000000)}"; then INTENSITY="🔥"
 elif awk "BEGIN{exit !($TODAY_TOK > 20000000)}"; then INTENSITY="🟠"
@@ -165,7 +165,12 @@ elif awk "BEGIN{exit !($TODAY_TOK > 5000000)}"; then INTENSITY="🟡"
 elif awk "BEGIN{exit !($TODAY_TOK > 0)}"; then INTENSITY="🟢"
 else INTENSITY="💤"; fi
 
-echo "$INTENSITY $(fmt $TODAY_TOK)"
+# Hide cost when there's no usage today (avoids the noisy "$0.00").
+if awk "BEGIN{exit !($TODAY_TOK > 0)}"; then
+  echo "$INTENSITY $(fmt $TODAY_TOK) · $(fmt_usd $TODAY_COST)"
+else
+  echo "$INTENSITY $(fmt $TODAY_TOK)"
+fi
 
 # Dropdown
 echo "---"

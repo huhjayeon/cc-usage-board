@@ -44,8 +44,13 @@ The top nav switches between two pages.
 ### `overview.html` — All Time
 - **Aggregate cards**: all-time total / **monthly average** (tokens+cost) / most expensive month / cheapest month
 - **Monthly trend chart**: bars (tokens) + line (cost) + dashed (monthly average)
+- **Cumulative usage curve**: daily running total since first record (tokens area + cost line)
 - **All-time model breakdown** doughnut (summed across months)
+- **Average by weekday** bar chart (per-active-day, weekend color-coded)
+- **Model share by month** stacked bar (model mix evolution over time)
 - **Monthly detail table**: month / total tokens / total cost / active days / daily avg / vs prev month / models
+
+> Compact layout designed to fit a single viewport (2-col + 3-col + compact table).
 
 ## Requirements
 
@@ -63,7 +68,7 @@ The top nav switches between two pages.
 ```bash
 git clone https://github.com/huhjayeon/cc-usage-board.git ~/claude-dashboard
 cd ~/claude-dashboard
-chmod +x update.sh update.mjs plugins/claude-usage.5m.sh
+chmod +x update.sh update.mjs plugins/claude-usage.5m.sh test.sh
 ./update.sh           # First data pull (npx fetches ccusage, ~30s–1m)
 open dashboard.html   # macOS. On Linux: xdg-open dashboard.html
 ```
@@ -131,12 +136,30 @@ Menu entries:
 | File | Role |
 | --- | --- |
 | `dashboard.html` | Main UI — overview (Chart.js via CDN) |
-| `overview.html` | All Time — monthly trend / average / model aggregation |
-| `i18n.js` | Korean/English strings + locale-aware number formatter |
+| `overview.html` | All Time — 5 charts + monthly detail table |
+| `i18n.js` | Korean/English translation + number formatter + language toggle |
+| `shared.js` | Shared helpers (`modelShort`, `modelTokens`, `el`, `CHART_THEME`, `CHART_COLORS`) |
+| `styles.css` | Shared design tokens (CSS variables) + model pills + utility classes |
 | `update.mjs` | Calls ccusage → writes `data*.json` / `data.js` (cross-platform) |
 | `update.sh` | Convenience wrapper for macOS/Linux that calls `update.mjs` |
 | `plugins/claude-usage.5m.sh` | SwiftBar menu bar plugin (macOS only) |
+| `test.sh` | Smoke tests (syntax / tag balance / i18n parity / file refs) |
 | `data.js`, `data-*.json` | Generated data (gitignored) |
+
+## Development / testing
+
+Run `./test.sh` to smoke-test after any change. It covers:
+
+- JS / shell syntax (`node --check`, `bash -n`)
+- HTML inline script syntax
+- HTML tag balance
+- i18n key parity (`ko ≡ en`, every key used in HTML is defined, no orphans)
+- Required external file references
+
+```bash
+./test.sh
+# PASS: 16 / FAIL: 0
+```
 
 ## Troubleshooting
 

@@ -42,8 +42,13 @@ Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 ### `overview.html` — 전체 기간
 - **집계 카드**: 전체 누적 / **월 평균** (토큰+비용) / 가장 비싼 월 / 가장 적은 월
 - **월별 추이 차트**: 막대(토큰) + 선(비용) + 점선(월 평균)
+- **누적 사용량 곡선**: 첫 기록 이후 일별 누적 토큰(영역) + 누적 비용(선)
 - **전체 모델별 비중** 도넛 (모든 월 합산)
+- **요일별 평균** 막대 차트 (활동일 기준, 주말 색상 구분)
+- **월별 모델 비중 변화** 스택드 바 (모델 점유율 시간 추이)
 - **월별 상세 테이블**: 월 / 총 토큰 / 총 비용 / 활동일 / 일평균 / 전월 대비 / 모델
+
+> 한 화면에 모두 들어오도록 압축 레이아웃 적용 (2-col + 3-col + 컴팩트 테이블).
 
 ## 요구사항
 
@@ -61,7 +66,7 @@ Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 ```bash
 git clone https://github.com/huhjayeon/cc-usage-board.git ~/claude-dashboard
 cd ~/claude-dashboard
-chmod +x update.sh update.mjs plugins/claude-usage.5m.sh
+chmod +x update.sh update.mjs plugins/claude-usage.5m.sh test.sh
 ./update.sh           # 데이터 첫 생성 (npx가 ccusage를 자동 설치, 30초~1분)
 open dashboard.html   # macOS. Linux는 xdg-open dashboard.html
 ```
@@ -126,12 +131,30 @@ ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
 | 파일 | 역할 |
 | --- | --- |
 | `dashboard.html` | 메인 UI — 전체 개요 (Chart.js CDN) |
-| `overview.html` | 전체 기간 — 월별 추이/평균/모델 집계 |
-| `i18n.js` | 한국어/영어 번역 + 숫자 포맷터 |
+| `overview.html` | 전체 기간 — 차트 5개 + 월별 상세 테이블 |
+| `i18n.js` | 한국어/영어 번역 + 숫자 포맷터 + 언어 토글 |
+| `shared.js` | 양쪽 페이지에서 쓰는 헬퍼 (`modelShort`, `modelTokens`, `el`, `CHART_THEME`, `CHART_COLORS`) |
+| `styles.css` | 공유 디자인 토큰 (CSS 변수) + 모델 pill / 공통 유틸 클래스 |
 | `update.mjs` | ccusage 호출 → `data*.json` / `data.js` 생성 (크로스플랫폼) |
 | `update.sh` | macOS/Linux용 편의 래퍼. 내부적으로 `update.mjs` 호출 |
 | `plugins/claude-usage.5m.sh` | SwiftBar 메뉴바 플러그인 (macOS 전용) |
+| `test.sh` | 스모크 테스트 (문법/태그/i18n 정합/파일 참조) |
 | `data.js`, `data-*.json` | 생성된 데이터 (gitignore) |
+
+## 개발 / 테스트
+
+코드를 수정한 뒤 `./test.sh`로 스모크 테스트를 돌릴 수 있다. 검사 항목:
+
+- JS / 셸 스크립트 문법 (`node --check`, `bash -n`)
+- HTML 인라인 스크립트 문법
+- HTML 태그 균형
+- i18n 키 정합성 (`ko ≡ en`, HTML에 쓰인 키 모두 정의됨, 미사용 키 없음)
+- 외부 파일 참조 정상
+
+```bash
+./test.sh
+# PASS: 16 / FAIL: 0
+```
 
 ## 트러블슈팅
 

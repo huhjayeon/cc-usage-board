@@ -65,17 +65,19 @@ done
 
 echo ""
 echo "== i18n parity =="
-check "ko ≡ en + no orphans"    node -e "
+check "ko ≡ ja ≡ en + no orphans" node -e "
   const fs = require('fs');
   const code = fs.readFileSync('i18n.js', 'utf8');
   const ctx = { window: {}, document: { documentElement: {}, querySelector: () => null, querySelectorAll: () => [] }, localStorage: { getItem: () => null, setItem: () => {} }, navigator: { language: 'en' } };
   new Function('window', 'document', 'localStorage', 'navigator', code)(ctx.window, ctx.document, ctx.localStorage, ctx.navigator);
   const I18N = ctx.window.CLAUDE_I18N;
   const keys = [...code.matchAll(/^\\s{6}([a-zA-Z_][a-zA-Z0-9_]*):/gm)].map(m => m[1]);
-  const ko = new Set(), en = new Set();
-  I18N.lang = 'ko'; for (const k of keys) if (I18N.t(k) !== k) ko.add(k);
-  I18N.lang = 'en'; for (const k of keys) if (I18N.t(k) !== k) en.add(k);
-  ko.add('dow'); ko.add('locale'); en.add('dow'); en.add('locale');
+  const sets = { ko: new Set(), ja: new Set(), en: new Set() };
+  for (const lang of ['ko','ja','en']) {
+    I18N.lang = lang;
+    for (const k of keys) if (I18N.t(k) !== k) sets[lang].add(k);
+    sets[lang].add('dow'); sets[lang].add('locale');
+  }
   const used = new Set();
   for (const f of ['dashboard.html', 'overview.html']) {
     const html = fs.readFileSync(f, 'utf8');
@@ -84,15 +86,18 @@ check "ko ≡ en + no orphans"    node -e "
     if (html.includes('I18N.dow()')) used.add('dow');
     if (html.includes('I18N.locale()')) used.add('locale');
   }
-  const onlyKo = [...ko].filter(k => !en.has(k));
-  const onlyEn = [...en].filter(k => !ko.has(k));
-  const undef = [...used].filter(k => !ko.has(k));
-  const unused = [...ko].filter(k => !used.has(k));
-  if (onlyKo.length) console.error('ko-only:', onlyKo);
-  if (onlyEn.length) console.error('en-only:', onlyEn);
+  const all = new Set([...sets.ko, ...sets.ja, ...sets.en]);
+  const missing = {};
+  for (const lang of ['ko','ja','en']) {
+    const miss = [...all].filter(k => !sets[lang].has(k));
+    if (miss.length) missing[lang] = miss;
+  }
+  const undef = [...used].filter(k => !sets.ko.has(k));
+  const unused = [...sets.ko].filter(k => !used.has(k));
+  if (Object.keys(missing).length) console.error('lang missing:', missing);
   if (undef.length) console.error('used but undefined:', undef);
   if (unused.length) console.error('defined but unused:', unused);
-  if (onlyKo.length || onlyEn.length || undef.length || unused.length) process.exit(1);
+  if (Object.keys(missing).length || undef.length || unused.length) process.exit(1);
 "
 
 echo ""

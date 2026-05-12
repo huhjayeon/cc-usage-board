@@ -1,5 +1,8 @@
-// i18n.js — Korean / English bilingual support for the dashboard.
+// i18n.js — Korean / Japanese / English trilingual support for the dashboard.
 // Loaded by dashboard.html and overview.html before each page's script.
+//
+// Convention: keys starting with `meta_` or `tooltip_` are function-valued
+// (template strings with args). All other keys return static strings.
 (function () {
   const STRINGS = {
     ko: {
@@ -83,6 +86,90 @@
       dsCumulativeCost: '누적 비용 ($)',
       tooltip_avgPerActiveDay: (n) => `평균: ${n}`,
       tooltip_activeDaysCount: (n) => `활동 ${n}일`,
+      switchToLabel: 'JA',
+      switchToTitle: '日本語に切替',
+    },
+    ja: {
+      pageTitleDashboard: 'Claude トークン使用量ダッシュボード',
+      pageTitleOverview: 'Claude トークン使用量 — 全期間',
+      pageHeaderDashboard: 'Claude トークン使用量ダッシュボード',
+      pageHeaderOverview: 'Claude トークン使用量 — 全期間',
+      navDashboard: 'ダッシュボード',
+      navOverview: '全期間',
+      refresh: '🔄 更新',
+      updateHelpPrefix: 'データ更新:',
+      updateHelpOr: 'または',
+      updateHelpMac: '(macOS/Linux)',
+      updateHelpWin: '(Windows)',
+      statToday: '今日',
+      statYesterday: '昨日',
+      statWeek: '過去7日',
+      statMonth: '今月',
+      statTotal: '累計',
+      statPlan: 'プラン使用率（今月）',
+      panelMonthlyTrend: '月別推移',
+      panelDaily60: '過去60日・日別トークン',
+      panelHeatmap: '活動ヒートマップ',
+      panelHeatmapSub: '過去90日・GitHubスタイル',
+      panelModelBreakdownThisMonth: '今月のモデル別シェア',
+      panelRecent30: '過去30日・日別詳細',
+      heatmapLess: '少',
+      heatmapMore: '多',
+      colDate: '日付',
+      colDay: '曜日',
+      colModel: 'モデル',
+      colTotalTokens: '合計トークン',
+      colOutput: 'Output',
+      colCacheRead: 'Cache Read',
+      colCost: '換算コスト',
+      statMCost: '合計コスト',
+      dsTotalTokens: '合計トークン',
+      dsCost: '換算コスト ($)',
+      lastUpdated: '最終更新',
+      dataRange: 'データ範囲',
+      meta_dailyStats: (avg, peak) => `· 日平均 ${avg} · ピーク ${peak}`,
+      tooltip_tokens: (n) => `${n} トークン`,
+      tooltip_cost: (c) => `${c} 換算`,
+      deltaVsYesterday: 'vs 昨日',
+      deltaVsPrev7: 'vs 直近7日',
+      deltaVsLastMonth: (n) => `vs 先月1~${n}日`,
+      errLoadFailed: 'データの読み込みに失敗しました',
+      errDataMissing: 'data.jsが見つかりません。先に ./update.sh (macOS/Linux) または node update.mjs (Windows) を実行してください。',
+      errEmptyData: '表示する使用記録がありません。Claude Codeを使用してから ./update.sh を再実行してください。',
+      errRunFirst: 'ターミナルで先に実行:',
+      insufficientData: '比較可能な完了月が不足',
+      dow: ['日','月','火','水','木','金','土'],
+      locale: 'ja-JP',
+      statTotalCumulative: '累計',
+      statMonthlyAvg: '月平均',
+      statPeakMonth: '最高コストの月',
+      statLowMonth: '最低コストの月',
+      panelAllModelBreakdown: '全期間モデル別シェア',
+      panelMonthlyDetail: '月別詳細',
+      colMonth: '月',
+      colActiveDays: '活動日数',
+      colDailyAvg: '日平均',
+      colVsLastMonth: '前月比',
+      avgCostSuffix: ' /月',
+      currentMonthInProgress: '（今月は進行中）',
+      daysSuffix: '日',
+      inProgressTag: ' · 進行中',
+      trendLegendNote: '· 棒=トークン · 線=コスト($) · 点線=月平均',
+      dsMonthlyAvgTokens: '月平均トークン',
+      tooltip_tokensLabel: (n) => `トークン: ${n}`,
+      tooltip_costLabel: (c) => `コスト: ${c}`,
+      tooltip_monthlyAvgLabel: (n) => `月平均: ${n}`,
+      meta_overviewRange: (start, end, n) => `データ範囲: ${start} ~ ${end} · ${n}ヶ月`,
+      panelCumulative: '累計使用量',
+      panelCumulativeSub: '· 最初の記録以降の日別累計',
+      panelByWeekday: '曜日別平均',
+      panelByWeekdaySub: '· 活動日基準の平均トークン',
+      panelModelByMonth: '月別モデル別シェア',
+      panelModelByMonthSub: '· トークン基準の積み上げ',
+      dsCumulativeTokens: '累計トークン',
+      dsCumulativeCost: '累計コスト ($)',
+      tooltip_avgPerActiveDay: (n) => `平均: ${n}`,
+      tooltip_activeDaysCount: (n) => `活動 ${n}日`,
       switchToLabel: 'EN',
       switchToTitle: 'Switch to English',
     },
@@ -172,15 +259,20 @@
     },
   };
 
+  const SUPPORTED = ['ko', 'ja', 'en'];
+  // Cycle order — clicking the toggle moves to the next entry, wrapping around.
+  const NEXT = { ko: 'ja', ja: 'en', en: 'ko' };
   const STORAGE_KEY = 'claude-dashboard-lang';
 
   function detect() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'ko' || saved === 'en') return saved;
+      if (SUPPORTED.includes(saved)) return saved;
     } catch (e) { /* localStorage may be blocked on file:// */ }
     const nav = (navigator.language || 'en').toLowerCase();
-    return nav.startsWith('ko') ? 'ko' : 'en';
+    if (nav.startsWith('ko')) return 'ko';
+    if (nav.startsWith('ja')) return 'ja';
+    return 'en';
   }
 
   const I18N = {
@@ -197,27 +289,29 @@
       return STRINGS[this.lang].locale;
     },
     setLang(lang) {
-      if (lang !== 'ko' && lang !== 'en') return;
+      if (!SUPPORTED.includes(lang)) return;
       try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
       this.lang = lang;
       document.documentElement.lang = lang;
       location.reload();
     },
     toggle() {
-      this.setLang(this.lang === 'ko' ? 'en' : 'ko');
+      this.setLang(NEXT[this.lang]);
     },
     // Number formatter respecting locale.
-    // KO: 만/억 units. EN: K/M/B units.
+    // KO: 만/억 (Korean hangul) · JA: 万/億 (kanji) · EN: K/M/B.
     fmt(n) {
       if (n == null || isNaN(n)) return '0';
       n = Math.round(n);
-      if (this.lang === 'ko') {
+      if (this.lang === 'ko' || this.lang === 'ja') {
+        const big = this.lang === 'ko' ? '억' : '億';
+        const small = this.lang === 'ko' ? '만' : '万';
         if (n >= 1e8) {
           const eok = n / 1e8;
-          return (eok >= 10 ? Math.round(eok).toLocaleString() : eok.toFixed(1)) + '억';
+          return (eok >= 10 ? Math.round(eok).toLocaleString() : eok.toFixed(1)) + big;
         }
         if (n >= 1e4) {
-          return Math.round(n / 1e4).toLocaleString() + '만';
+          return Math.round(n / 1e4).toLocaleString() + small;
         }
         return n.toLocaleString();
       } else {

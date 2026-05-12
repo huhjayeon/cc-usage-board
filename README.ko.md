@@ -1,6 +1,6 @@
 # cc-usage-board
 
-[English](README.md) · **한국어**
+[English](README.md) · **한국어** · [日本語](README.ja.md)
 
 Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 
@@ -16,9 +16,9 @@ Claude Code 토큰 사용량을 시각화하는 로컬 대시보드.
 
 ## 다국어 지원
 
-대시보드 우상단의 `KO / EN` 토글로 한국어/영어를 즉시 전환할 수 있다.
+대시보드 우상단의 `KO / JA / EN` 토글로 한국어/일본어/영어를 즉시 사이클할 수 있다.
 선택한 언어는 브라우저 `localStorage`에 저장되며, 처음 방문 시에는 브라우저
-언어 설정을 따른다. 숫자 단위도 함께 바뀐다 (한국어 `만/억`, 영어 `K/M/B`).
+언어 설정을 따른다. 숫자 단위도 함께 바뀐다 (한국어 `만/억`, 일본어 `万/億`, 영어 `K/M/B`).
 
 ## 플랫폼 호환성
 
@@ -132,18 +132,18 @@ ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
 - **대시보드 열기** — `dashboard.html`을 브라우저에서 열기
 - **지금 갱신** — `update.sh` 즉시 실행
 - **폴더 열기** — 프로젝트 폴더 열기
-- **🌐 English / 🌐 한국어** — 클릭 한 번으로 언어 전환
+- **🌐 한국어 / 日本語 / English** — 한 번 클릭마다 언어 사이클 (KO → JA → EN)
 
 ### 플러그인 언어 설정
 
 메뉴의 토글 외에 다음 방법으로도 언어를 고정할 수 있다 (우선순위 순):
 
-1. **SwiftBar 변수** — 플러그인 설정 → Variables → `CC_USAGE_LANG=ko`
-2. **파일** — `echo ko > ~/.claude-dashboard-lang`
-3. **시스템** — `$LANG`이 `ko_*`로 시작하면 자동 KO, 그 외 EN
+1. **SwiftBar 변수** — 플러그인 설정 → Variables → `CC_USAGE_LANG=ko` (또는 `ja` / `en`)
+2. **파일** — `echo ko > ~/.claude-dashboard-lang` (또는 `ja` / `en`)
+3. **시스템** — `$LANG`이 `ko_*`이면 KO, `ja_*`이면 JA, 그 외 EN
 4. 기본값은 영어
 
-숫자 단위도 함께 바뀐다 (KO: `만/억`, EN: `K/M/B`).
+숫자 단위도 함께 바뀐다 (KO: `만/억`, JA: `万/億`, EN: `K/M/B`).
 
 ## 파일별 역할
 
@@ -151,7 +151,7 @@ ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
 | --- | --- |
 | `dashboard.html` | 메인 UI — 전체 개요 (Chart.js CDN) |
 | `overview.html` | 전체 기간 — 차트 5개 + 월별 상세 테이블 |
-| `i18n.js` | 한국어/영어 번역 + 숫자 포맷터 + 언어 토글 |
+| `i18n.js` | 한국어/일본어/영어 번역 + 숫자 포맷터 + 언어 사이클 |
 | `shared.js` | 양쪽 페이지에서 쓰는 헬퍼 (`modelShort`, `modelTokens`, `el`, `CHART_THEME`, `CHART_COLORS`) |
 | `styles.css` | 공유 디자인 토큰 (CSS 변수) + 모델 pill / 공통 유틸 클래스 |
 | `update.mjs` | ccusage 호출 → `data*.json` / `data.js` 생성 (크로스플랫폼) |
@@ -167,7 +167,7 @@ ln -s ~/claude-dashboard/plugins/claude-usage.5m.sh \
 - JS / 셸 스크립트 문법 (`node --check`, `bash -n`)
 - HTML 인라인 스크립트 문법
 - HTML 태그 균형
-- i18n 키 정합성 (`ko ≡ en`, HTML에 쓰인 키 모두 정의됨, 미사용 키 없음)
+- i18n 키 정합성 (`ko ≡ ja ≡ en`, HTML에 쓰인 키 모두 정의됨, 미사용 키 없음)
 - 외부 파일 참조 정상
 
 ```bash

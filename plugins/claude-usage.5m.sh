@@ -16,44 +16,63 @@ DATA="$DASH_DIR/data-daily.json"
 
 # ---- Language selection ---------------------------------------------------
 # Precedence: $CC_USAGE_LANG > ~/.claude-dashboard-lang > $LANG prefix > en.
-# Set CC_USAGE_LANG=ko (or en) in your SwiftBar variables to force a choice.
+# Supports ko, ja, en. Set CC_USAGE_LANG in SwiftBar Variables to override.
 LANG_PREF="${CC_USAGE_LANG:-}"
 if [ -z "$LANG_PREF" ] && [ -f "$HOME/.claude-dashboard-lang" ]; then
   LANG_PREF="$(tr -d '[:space:]' < "$HOME/.claude-dashboard-lang")"
 fi
 if [ -z "$LANG_PREF" ]; then
-  case "${LANG:-en}" in ko*|KO*) LANG_PREF="ko" ;; *) LANG_PREF="en" ;; esac
+  case "${LANG:-en}" in
+    ko*|KO*) LANG_PREF="ko" ;;
+    ja*|JA*) LANG_PREF="ja" ;;
+    *) LANG_PREF="en" ;;
+  esac
 fi
-[ "$LANG_PREF" != "ko" ] && LANG_PREF="en"
+case "$LANG_PREF" in
+  ko|ja|en) ;;
+  *) LANG_PREF="en" ;;
+esac
+
+# Cycle order matches the web dashboard: ko → ja → en → ko.
+case "$LANG_PREF" in
+  ko) NEXT_LANG="ja" ;;
+  ja) NEXT_LANG="en" ;;
+  en) NEXT_LANG="ko" ;;
+esac
 
 # ---- Translations ---------------------------------------------------------
-if [ "$LANG_PREF" = "ko" ]; then
-  T_TITLE="Claude Code 사용량"
-  T_TODAY="오늘"
-  T_YESTERDAY="어제"
-  T_WEEK="최근 7일"
-  T_MONTH="이번 달"
-  T_OPEN_DASH="📊 대시보드 열기"
-  T_REFRESH="🔄 지금 갱신"
-  T_OPEN_FOLDER="📁 폴더 열기"
-  T_LAST_UPDATED="마지막 갱신"
-  T_JQ_NEEDED="🤖 jq 필요"
-  T_SWITCH_LANG="🌐 English"
-  OTHER_LANG="en"
-else
-  T_TITLE="Claude Code usage"
-  T_TODAY="Today"
-  T_YESTERDAY="Yesterday"
-  T_WEEK="Last 7 days"
-  T_MONTH="This month"
-  T_OPEN_DASH="📊 Open dashboard"
-  T_REFRESH="🔄 Refresh now"
-  T_OPEN_FOLDER="📁 Open folder"
-  T_LAST_UPDATED="Last updated"
-  T_JQ_NEEDED="🤖 jq required"
-  T_SWITCH_LANG="🌐 한국어"
-  OTHER_LANG="ko"
-fi
+case "$LANG_PREF" in
+  ko)
+    T_TITLE="Claude Code 사용량"
+    T_TODAY="오늘"; T_YESTERDAY="어제"; T_WEEK="최근 7일"; T_MONTH="이번 달"
+    T_OPEN_DASH="📊 대시보드 열기"
+    T_REFRESH="🔄 지금 갱신"
+    T_OPEN_FOLDER="📁 폴더 열기"
+    T_LAST_UPDATED="마지막 갱신"
+    T_JQ_NEEDED="🤖 jq 필요"
+    T_SWITCH_LANG="🌐 日本語"
+    ;;
+  ja)
+    T_TITLE="Claude Code 使用量"
+    T_TODAY="今日"; T_YESTERDAY="昨日"; T_WEEK="過去7日"; T_MONTH="今月"
+    T_OPEN_DASH="📊 ダッシュボードを開く"
+    T_REFRESH="🔄 今すぐ更新"
+    T_OPEN_FOLDER="📁 フォルダを開く"
+    T_LAST_UPDATED="最終更新"
+    T_JQ_NEEDED="🤖 jq が必要"
+    T_SWITCH_LANG="🌐 English"
+    ;;
+  en)
+    T_TITLE="Claude Code usage"
+    T_TODAY="Today"; T_YESTERDAY="Yesterday"; T_WEEK="Last 7 days"; T_MONTH="This month"
+    T_OPEN_DASH="📊 Open dashboard"
+    T_REFRESH="🔄 Refresh now"
+    T_OPEN_FOLDER="📁 Open folder"
+    T_LAST_UPDATED="Last updated"
+    T_JQ_NEEDED="🤖 jq required"
+    T_SWITCH_LANG="🌐 한국어"
+    ;;
+esac
 
 # Trigger first-time data generation if missing.
 [ -f "$DATA" ] || "$DASH_DIR/update.sh" >/dev/null 2>&1
@@ -80,14 +99,16 @@ if [ -z "$JQ" ]; then
   exit 0
 fi
 
-# Locale-aware number formatter (KO: 만/억, EN: K/M/B).
+# Locale-aware number formatter (KO: 만/억, JA: 万/億, EN: K/M/B).
 fmt() {
   awk -v n="$1" -v lang="$LANG_PREF" 'BEGIN {
-    if (lang == "ko") {
+    if (lang == "ko" || lang == "ja") {
+      big   = (lang == "ko") ? "억" : "億";
+      small = (lang == "ko") ? "만" : "万";
       if (n >= 1e8) {
         eok = n / 1e8;
-        if (eok >= 10) printf "%d억", int(eok + 0.5);
-        else printf "%.1f억", eok;
+        if (eok >= 10) printf "%d%s", int(eok + 0.5), big;
+        else printf "%.1f%s", eok, big;
       } else if (n >= 1e4) {
         man = int(n/1e4 + 0.5);
         s = sprintf("%d", man);
@@ -95,7 +116,7 @@ fmt() {
         i = length(s);
         while (i > 3) { out = "," substr(s, i-2, 3) out; i -= 3; }
         out = substr(s, 1, i) out;
-        printf "%s만", out;
+        printf "%s%s", out, small;
       } else {
         printf "%d", n;
       }
@@ -159,6 +180,6 @@ echo "$T_OPEN_DASH | bash=open param1=$DASH_DIR/dashboard.html terminal=false"
 echo "$T_REFRESH | bash=$DASH_DIR/update.sh terminal=false refresh=true"
 echo "$T_OPEN_FOLDER | bash=open param1=$DASH_DIR terminal=false"
 echo "---"
-echo "$T_SWITCH_LANG | bash=bash param1=-c param2=\"echo $OTHER_LANG > $HOME/.claude-dashboard-lang\" terminal=false refresh=true"
+echo "$T_SWITCH_LANG | bash=bash param1=-c param2=\"echo $NEXT_LANG > $HOME/.claude-dashboard-lang\" terminal=false refresh=true"
 echo "---"
 echo "$T_LAST_UPDATED: $(stat -f '%Sm' -t '%H:%M' "$DATA" 2>/dev/null) | size=10 color=gray"

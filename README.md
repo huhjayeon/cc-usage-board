@@ -1,6 +1,6 @@
 # cc-usage-board
 
-**English** · [한국어](README.ko.md)
+**English** · [한국어](README.ko.md) · [日本語](README.ja.md)
 
 A local dashboard that visualizes Claude Code token usage.
 
@@ -15,12 +15,13 @@ SwiftBar plugin for at-a-glance menu bar stats.
 > (`data*.json`, `data.js`) are listed in `.gitignore` so they will not
 > be committed by accident.
 
-## Bilingual UI
+## Trilingual UI
 
-A `KO / EN` toggle in the top right of each dashboard page switches the
-language instantly. Your choice is persisted in `localStorage`; on first
-visit, the dashboard picks up your browser language. Number units adapt
-to the locale as well (Korean uses `만/억`, English uses `K/M/B`).
+A `KO / JA / EN` toggle in the top right of each dashboard page cycles
+through Korean, Japanese, and English instantly. Your choice is persisted in
+`localStorage`; on first visit, the dashboard picks up your browser language.
+Number units adapt to the locale as well (Korean: `만/억`, Japanese: `万/億`,
+English: `K/M/B`).
 
 ## Platform compatibility
 
@@ -137,18 +138,18 @@ Menu entries:
 - **Open dashboard** — opens `dashboard.html` in the browser
 - **Refresh now** — runs `update.sh` immediately
 - **Open folder** — opens the project folder
-- **🌐 한국어 / 🌐 English** — one-click language switch
+- **🌐 한국어 / 日本語 / English** — one-click language cycle (KO → JA → EN)
 
 ### Plugin language settings
 
 Besides the in-menu toggle, you can pin a language via (highest priority first):
 
-1. **SwiftBar variable** — plugin settings → Variables → `CC_USAGE_LANG=ko`
-2. **File** — `echo ko > ~/.claude-dashboard-lang`
-3. **System locale** — `$LANG` starting with `ko_*` selects KO, otherwise EN
+1. **SwiftBar variable** — plugin settings → Variables → `CC_USAGE_LANG=ko` (or `ja` / `en`)
+2. **File** — `echo ko > ~/.claude-dashboard-lang` (or `ja` / `en`)
+3. **System locale** — `$LANG` starting with `ko_*` → KO, `ja_*` → JA, otherwise EN
 4. Default is English
 
-Number units follow the locale (KO: `만/억`, EN: `K/M/B`).
+Number units follow the locale (KO: `만/억`, JA: `万/億`, EN: `K/M/B`).
 
 ## File guide
 
@@ -156,7 +157,7 @@ Number units follow the locale (KO: `만/억`, EN: `K/M/B`).
 | --- | --- |
 | `dashboard.html` | Main UI — overview (Chart.js via CDN) |
 | `overview.html` | All Time — 5 charts + monthly detail table |
-| `i18n.js` | Korean/English translation + number formatter + language toggle |
+| `i18n.js` | Korean / Japanese / English translation + number formatter + language cycle |
 | `shared.js` | Shared helpers (`modelShort`, `modelTokens`, `el`, `CHART_THEME`, `CHART_COLORS`) |
 | `styles.css` | Shared design tokens (CSS variables) + model pills + utility classes |
 | `update.mjs` | Calls ccusage → writes `data*.json` / `data.js` (cross-platform) |
@@ -172,7 +173,7 @@ Run `./test.sh` to smoke-test after any change. It covers:
 - JS / shell syntax (`node --check`, `bash -n`)
 - HTML inline script syntax
 - HTML tag balance
-- i18n key parity (`ko ≡ en`, every key used in HTML is defined, no orphans)
+- i18n key parity (`ko ≡ ja ≡ en`, every key used in HTML is defined, no orphans)
 - Required external file references
 
 ```bash

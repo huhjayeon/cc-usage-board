@@ -134,8 +134,8 @@
   <button class="lang-toggle" id="lang-toggle" onclick="CLAUDE_I18N.toggle()"></button>
 </div>
 <div class="nav">
-  <a href="dashboard.html" data-i18n="navDashboard"></a>
-  <a href="overview.html" class="active" data-i18n="navOverview"></a>
+  <a href="dashboard.html" data-i18n="navDashboard">Dashboard</a>
+  <a href="overview.html" class="active" data-i18n="navOverview">All Time</a>
 </div>
 
 <div class="sub" id="period-meta"></div>
@@ -242,6 +242,16 @@ if (!window.CLAUDE_DATA) {
   const monthly = [...window.CLAUDE_DATA.monthly.monthly].sort((a, b) => a.month.localeCompare(b.month));
   const daily = window.CLAUDE_DATA.daily.daily;
   const todayMonth = new Date().toISOString().slice(0, 7);
+
+  // Pre-group daily entries by month so the monthly table can look up O(1)
+  // instead of running daily.filter(...) once per row.
+  const dailyByMonth = new Map();
+  for (const d of daily) {
+    const m = d.date.slice(0, 7);
+    const bucket = dailyByMonth.get(m);
+    if (bucket) bucket.push(d);
+    else dailyByMonth.set(m, [d]);
+  }
 
   // ---- Aggregate ----
   const totalTok = monthly.reduce((s, m) => s + m.totalTokens, 0);
@@ -529,7 +539,7 @@ if (!window.CLAUDE_DATA) {
   for (let i = 0; i < reversed.length; i++) {
     const m = reversed[i];
     const prev = reversed[i + 1]; // older month (previous)
-    const monthDaily = daily.filter(d => d.date.startsWith(m.month));
+    const monthDaily = dailyByMonth.get(m.month) || [];
     const activityDays = monthDaily.length;
     const dailyAvg = activityDays > 0 ? m.totalTokens / activityDays : 0;
     const models = (m.modelsUsed || []).map(name => {

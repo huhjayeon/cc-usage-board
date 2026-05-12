@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title data-i18n="pageTitleDashboard">Claude Usage Dashboard</title>
+<link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
         integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
         crossorigin="anonymous"></script>
@@ -12,7 +13,6 @@
 <script src="i18n.js"></script>
 <script src="shared.js"></script>
 <script src="data.js"></script>
-<link rel="stylesheet" href="styles.css">
 <style>
   body { padding: 24px; }
   .header {
@@ -199,7 +199,7 @@
   </div>
   <div class="panel">
     <h2 data-i18n="panelModelBreakdownThisMonth"></h2>
-    <div style="height: 200px; display: flex; align-items: center; justify-content: center;">
+    <div class="canvas-center" style="height: 200px;">
       <canvas id="modelChart"></canvas>
     </div>
   </div>
@@ -376,11 +376,11 @@ function render({ daily, monthly }) {
       },
       scales: {
         y: {
-          ticks: { color: '#8b949e', callback: v => fmt(v) },
-          grid: { color: '#30363d' },
+          ticks: { color: CHART_THEME.tick, callback: v => fmt(v) },
+          grid: { color: CHART_THEME.grid },
         },
         x: {
-          ticks: { color: '#8b949e', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+          ticks: { color: CHART_THEME.tick, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
           grid: { display: false },
         },
       },
@@ -390,7 +390,6 @@ function render({ daily, monthly }) {
   // ---- Model donut (this month) ----
   if (thisMonth?.modelBreakdowns?.length) {
     const breakdowns = thisMonth.modelBreakdowns;
-    const modelTokens = b => b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens;
     const totalModelTokens = breakdowns.reduce((s, b) => s + modelTokens(b), 0);
     new Chart(document.getElementById('modelChart'), {
       type: 'doughnut',
@@ -399,7 +398,7 @@ function render({ daily, monthly }) {
         datasets: [{
           data: breakdowns.map(modelTokens),
           backgroundColor: CHART_COLORS.slice(0, 5),
-          borderColor: '#161b22',
+          borderColor: CHART_THEME.panelBg,
           borderWidth: 2,
         }],
       },
@@ -407,7 +406,7 @@ function render({ daily, monthly }) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#e6edf3', font: { size: 10 }, boxWidth: 10, padding: 6 } },
+          legend: { position: 'bottom', labels: { color: CHART_THEME.legend, font: { size: 10 }, boxWidth: 10, padding: 6 } },
           tooltip: {
             callbacks: {
               label: ctx => `${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw / totalModelTokens * 100).toFixed(0)}%)`
@@ -482,12 +481,12 @@ function render({ daily, monthly }) {
     options: {
       responsive: true,
       plugins: {
-        legend: { labels: { color: '#e6edf3', font: { size: 11 } } },
+        legend: { labels: { color: CHART_THEME.legend, font: { size: 11 } } },
       },
       scales: {
-        y: { ticks: { color: '#8b949e', callback: v => fmt(v) }, grid: { color: '#30363d' } },
-        y1: { position: 'right', ticks: { color: '#8b949e', callback: v => '$' + v }, grid: { display: false } },
-        x: { ticks: { color: '#8b949e' }, grid: { display: false } },
+        y: { ticks: { color: CHART_THEME.tick, callback: v => fmt(v) }, grid: { color: CHART_THEME.grid } },
+        y1: { position: 'right', ticks: { color: CHART_THEME.tick, callback: v => '$' + v }, grid: { display: false } },
+        x: { ticks: { color: CHART_THEME.tick }, grid: { display: false } },
       },
     },
   });

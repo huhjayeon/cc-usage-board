@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title data-i18n="pageTitleOverview">Claude Usage · All Time</title>
+<link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
         integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
         crossorigin="anonymous"></script>
 <script src="i18n.js"></script>
 <script src="shared.js"></script>
 <script src="data.js"></script>
-<link rel="stylesheet" href="styles.css">
 <style>
   body { padding: 14px 18px; }
   .header {
@@ -336,7 +336,7 @@ if (!window.CLAUDE_DATA) {
     options: {
       responsive: true,
       plugins: {
-        legend: { labels: { color: '#e6edf3', font: { size: 11 } } },
+        legend: { labels: { color: CHART_THEME.legend, font: { size: 11 } } },
         tooltip: {
           callbacks: {
             label: ctx => {
@@ -349,9 +349,9 @@ if (!window.CLAUDE_DATA) {
         },
       },
       scales: {
-        y: { ticks: { color: '#8b949e', callback: v => fmt(v) }, grid: { color: '#30363d' } },
-        y1: { position: 'right', ticks: { color: '#8b949e', callback: v => '$' + v }, grid: { display: false } },
-        x: { ticks: { color: '#8b949e' }, grid: { display: false } },
+        y: { ticks: { color: CHART_THEME.tick, callback: v => fmt(v) }, grid: { color: CHART_THEME.grid } },
+        y1: { position: 'right', ticks: { color: CHART_THEME.tick, callback: v => '$' + v }, grid: { display: false } },
+        x: { ticks: { color: CHART_THEME.tick }, grid: { display: false } },
       },
     },
   });
@@ -360,8 +360,7 @@ if (!window.CLAUDE_DATA) {
   const modelTotals = new Map();
   for (const m of monthly) {
     for (const b of (m.modelBreakdowns || [])) {
-      const t = b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens;
-      modelTotals.set(b.modelName, (modelTotals.get(b.modelName) || 0) + t);
+      modelTotals.set(b.modelName, (modelTotals.get(b.modelName) || 0) + modelTokens(b));
     }
   }
   const modelEntries = [...modelTotals.entries()].sort((a, b) => b[1] - a[1]);
@@ -374,7 +373,7 @@ if (!window.CLAUDE_DATA) {
         datasets: [{
           data: modelEntries.map(([, v]) => v),
           backgroundColor: CHART_COLORS,
-          borderColor: '#161b22',
+          borderColor: CHART_THEME.panelBg,
           borderWidth: 2,
         }],
       },
@@ -382,7 +381,7 @@ if (!window.CLAUDE_DATA) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#e6edf3', font: { size: 10 }, boxWidth: 10, padding: 6 } },
+          legend: { position: 'bottom', labels: { color: CHART_THEME.legend, font: { size: 10 }, boxWidth: 10, padding: 6 } },
           tooltip: {
             callbacks: {
               label: ctx => `${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw / modelSum * 100).toFixed(0)}%)`
@@ -434,7 +433,7 @@ if (!window.CLAUDE_DATA) {
       responsive: true,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { labels: { color: '#e6edf3', font: { size: 11 } } },
+        legend: { labels: { color: CHART_THEME.legend, font: { size: 11 } } },
         tooltip: {
           callbacks: {
             label: ctx => {
@@ -446,9 +445,9 @@ if (!window.CLAUDE_DATA) {
         },
       },
       scales: {
-        y: { ticks: { color: '#8b949e', callback: v => fmt(v) }, grid: { color: '#30363d' } },
-        y1: { position: 'right', ticks: { color: '#8b949e', callback: v => '$' + Math.round(v).toLocaleString() }, grid: { display: false } },
-        x: { ticks: { color: '#8b949e', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { ticks: { color: CHART_THEME.tick, callback: v => fmt(v) }, grid: { color: CHART_THEME.grid } },
+        y1: { position: 'right', ticks: { color: CHART_THEME.tick, callback: v => '$' + Math.round(v).toLocaleString() }, grid: { display: false } },
+        x: { ticks: { color: CHART_THEME.tick, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
       },
     },
   });
@@ -494,8 +493,8 @@ if (!window.CLAUDE_DATA) {
         },
       },
       scales: {
-        y: { ticks: { color: '#8b949e', callback: v => fmt(v) }, grid: { color: '#30363d' } },
-        x: { ticks: { color: '#8b949e' }, grid: { display: false } },
+        y: { ticks: { color: CHART_THEME.tick, callback: v => fmt(v) }, grid: { color: CHART_THEME.grid } },
+        x: { ticks: { color: CHART_THEME.tick }, grid: { display: false } },
       },
     },
   });
@@ -506,7 +505,7 @@ if (!window.CLAUDE_DATA) {
     label: modelShort(name).label,
     data: monthly.map(m => {
       const b = (m.modelBreakdowns || []).find(x => x.modelName === name);
-      return b ? b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens : 0;
+      return b ? modelTokens(b) : 0;
     }),
     backgroundColor: CHART_COLORS[idx % CHART_COLORS.length],
     borderRadius: 2,
@@ -521,7 +520,7 @@ if (!window.CLAUDE_DATA) {
     options: {
       responsive: true,
       plugins: {
-        legend: { labels: { color: '#e6edf3', font: { size: 10 }, boxWidth: 10, padding: 6 } },
+        legend: { labels: { color: CHART_THEME.legend, font: { size: 10 }, boxWidth: 10, padding: 6 } },
         tooltip: {
           callbacks: {
             label: ctx => `${ctx.dataset.label}: ${fmt(ctx.raw)}`
@@ -529,8 +528,8 @@ if (!window.CLAUDE_DATA) {
         },
       },
       scales: {
-        x: { stacked: true, ticks: { color: '#8b949e' }, grid: { display: false } },
-        y: { stacked: true, ticks: { color: '#8b949e', callback: v => fmt(v) }, grid: { color: '#30363d' } },
+        x: { stacked: true, ticks: { color: CHART_THEME.tick }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: CHART_THEME.tick, callback: v => fmt(v) }, grid: { color: CHART_THEME.grid } },
       },
     },
   });

@@ -25,6 +25,9 @@ body {
 
 canvas { max-width: 100%; }
 
+/* Common flex centering for chart containers */
+.canvas-center { display: flex; align-items: center; justify-content: center; }
+
 /* Model pill — variant colors are shared; sizing/padding stays page-specific */
 .model-pill.opus { color: #f0a878; border-color: #5c3a2e; }
 .model-pill.sonnet { color: #79c0ff; border-color: #2c4a6e; }

@@ -1,5 +1,5 @@
 // shared.js — utilities used by every dashboard page.
-// Globals: modelShort, CHART_COLORS, el, buildModelPills
+// Globals: modelShort, modelTokens, CHART_COLORS, CHART_THEME, el, buildModelPills
 
 function modelShort(name) {
   if (name.includes('opus')) {
@@ -17,8 +17,25 @@ function modelShort(name) {
   return { label: name, cls: '' };
 }
 
+// Sum all token columns of a model breakdown entry from ccusage.
+const modelTokens = b => b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens;
+
 // Default chart palette. Use .slice(0, n) when fewer colors are needed.
 const CHART_COLORS = ['#d97757', '#79c0ff', '#56d364', '#f0a878', '#bc8cff', '#8b949e'];
+
+// Chart styling pulled from CSS variables so styles.css is the single source of
+// truth. Fallback values match the original hardcoded colors in case the
+// stylesheet hasn't applied yet at script-load time.
+const CHART_THEME = (() => {
+  const root = getComputedStyle(document.documentElement);
+  const v = (name, fallback) => root.getPropertyValue(name).trim() || fallback;
+  return {
+    tick: v('--muted', '#8b949e'),
+    grid: v('--border', '#30363d'),
+    legend: v('--text', '#e6edf3'),
+    panelBg: v('--panel', '#161b22'),
+  };
+})();
 
 // Tiny DOM builder: el('div', {class: 'x'}, 'text', el('span', ...))
 // String/number children are inserted as text nodes (safe from HTML injection).

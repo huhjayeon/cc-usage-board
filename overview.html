@@ -25,104 +25,118 @@
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Pretendard', sans-serif;
     background: var(--bg);
     color: var(--text);
-    padding: 24px;
+    padding: 14px 18px;
   }
   .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
-  h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+  h1 { margin: 0; font-size: 18px; font-weight: 600; }
 
   .lang-toggle {
     background: var(--panel);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 6px 12px;
+    padding: 4px 10px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.5px;
     flex-shrink: 0;
   }
   .lang-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  .nav { display: flex; gap: 4px; margin-bottom: 16px; }
+  .nav { display: flex; gap: 4px; margin: 6px 0 10px; }
   .nav a {
     color: var(--muted);
     text-decoration: none;
-    padding: 6px 12px;
+    padding: 4px 10px;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 12px;
     border: 1px solid transparent;
   }
   .nav a.active { background: var(--panel); border-color: var(--border); color: var(--text); }
   .nav a:hover:not(.active) { background: var(--panel-2); color: var(--text); }
 
-  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .sub { color: var(--muted); font-size: 11px; margin-bottom: 10px; }
 
   .grid-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 10px;
   }
   .stat {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
+    border-radius: 8px;
+    padding: 8px 12px;
   }
   .stat.highlight { background: linear-gradient(135deg, #1c2128 0%, #2a1f1c 100%); border-color: #5c3a2e; }
-  .stat .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .stat .val { font-size: 22px; font-weight: 600; }
-  .stat .sub-val { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .stat .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .stat .val { font-size: 17px; font-weight: 600; line-height: 1.2; }
+  .stat .sub-val { color: var(--muted); font-size: 11px; margin-top: 1px; }
   .stat .month-tag { color: var(--accent-2); font-size: 13px; font-weight: 500; }
 
-  .grid-main {
+  .grid-pair {
     display: grid;
-    grid-template-columns: 7fr 3fr;
-    gap: 16px;
-    margin-bottom: 16px;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .grid-triple {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
   }
   .panel {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
+    border-radius: 8px;
+    padding: 10px 12px;
   }
-  .panel h2 { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--text); }
-  .panel .sub-h { color: var(--muted); font-size: 11px; font-weight: 400; }
+  .panel h2 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--text); }
+  .panel .sub-h { color: var(--muted); font-size: 10px; font-weight: 400; }
 
   canvas { max-width: 100%; }
 
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; }
+  .table-wrap { max-height: 220px; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 10px; text-transform: uppercase; position: sticky; top: 0; background: var(--panel); }
   td.num { text-align: right; font-variant-numeric: tabular-nums; }
   tbody tr:hover { background: var(--panel-2); }
   tbody tr.current-month { background: rgba(217, 119, 87, 0.06); }
-  .in-progress-tag { color: var(--accent); font-size: 10px; }
+  .in-progress-tag { color: var(--accent); font-size: 9px; }
 
   .model-pill {
     display: inline-block;
-    padding: 1px 6px;
+    padding: 1px 5px;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 9px;
     background: var(--panel-2);
     border: 1px solid var(--border);
-    margin-right: 3px;
+    margin-right: 2px;
     color: var(--muted);
   }
   .model-pill.opus { color: #f0a878; border-color: #5c3a2e; }
   .model-pill.sonnet { color: #79c0ff; border-color: #2c4a6e; }
   .model-pill.haiku { color: #56d364; border-color: #1f5028; }
 
-  .delta-up { color: var(--good); font-size: 11px; }
-  .delta-down { color: var(--warn); font-size: 11px; }
+  .delta-up { color: var(--good); font-size: 10px; }
+  .delta-down { color: var(--warn); font-size: 10px; }
+
+  @media (max-width: 1100px) {
+    .grid-triple { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 720px) {
+    .grid-pair, .grid-triple, .grid-stats { grid-template-columns: 1fr 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -160,51 +174,52 @@
   </div>
 </div>
 
-<div class="grid-main">
+<div class="grid-pair">
   <div class="panel">
     <h2><span data-i18n="panelMonthlyTrend"></span> <span class="sub-h" id="trend-meta"></span></h2>
-    <canvas id="monthlyChart" height="160"></canvas>
+    <canvas id="monthlyChart" height="120"></canvas>
   </div>
   <div class="panel">
+    <h2><span data-i18n="panelCumulative"></span> <span class="sub-h" data-i18n="panelCumulativeSub"></span></h2>
+    <canvas id="cumulativeChart" height="120"></canvas>
+  </div>
+</div>
+
+<div class="grid-triple">
+  <div class="panel">
     <h2 data-i18n="panelAllModelBreakdown"></h2>
-    <div style="height: 200px; display: flex; align-items: center; justify-content: center;">
+    <div style="height: 150px; display: flex; align-items: center; justify-content: center;">
       <canvas id="modelChart"></canvas>
     </div>
   </div>
-</div>
-
-<div class="grid-main">
-  <div class="panel">
-    <h2><span data-i18n="panelCumulative"></span> <span class="sub-h" data-i18n="panelCumulativeSub"></span></h2>
-    <canvas id="cumulativeChart" height="160"></canvas>
-  </div>
   <div class="panel">
     <h2><span data-i18n="panelByWeekday"></span> <span class="sub-h" data-i18n="panelByWeekdaySub"></span></h2>
-    <canvas id="weekdayChart" height="160"></canvas>
+    <canvas id="weekdayChart" height="150"></canvas>
+  </div>
+  <div class="panel">
+    <h2><span data-i18n="panelModelByMonth"></span> <span class="sub-h" data-i18n="panelModelByMonthSub"></span></h2>
+    <canvas id="modelStackChart" height="150"></canvas>
   </div>
 </div>
 
-<div class="panel" style="margin-top: 16px;">
-  <h2><span data-i18n="panelModelByMonth"></span> <span class="sub-h" data-i18n="panelModelByMonthSub"></span></h2>
-  <canvas id="modelStackChart" height="80"></canvas>
-</div>
-
-<div class="panel" style="margin-top: 16px;">
+<div class="panel">
   <h2 data-i18n="panelMonthlyDetail"></h2>
-  <table>
-    <thead>
-      <tr>
-        <th data-i18n="colMonth"></th>
-        <th class="num" data-i18n="colTotalTokens"></th>
-        <th class="num" data-i18n="statMCost"></th>
-        <th class="num" data-i18n="colActiveDays"></th>
-        <th class="num" data-i18n="colDailyAvg"></th>
-        <th class="num" data-i18n="colVsLastMonth"></th>
-        <th data-i18n="colModel"></th>
-      </tr>
-    </thead>
-    <tbody id="monthlyTable"></tbody>
-  </table>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="colMonth"></th>
+          <th class="num" data-i18n="colTotalTokens"></th>
+          <th class="num" data-i18n="statMCost"></th>
+          <th class="num" data-i18n="colActiveDays"></th>
+          <th class="num" data-i18n="colDailyAvg"></th>
+          <th class="num" data-i18n="colVsLastMonth"></th>
+          <th data-i18n="colModel"></th>
+        </tr>
+      </thead>
+      <tbody id="monthlyTable"></tbody>
+    </table>
+  </div>
 </div>
 
 <script>

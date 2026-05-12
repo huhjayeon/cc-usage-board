@@ -173,6 +173,22 @@
   </div>
 </div>
 
+<div class="grid-main">
+  <div class="panel">
+    <h2><span data-i18n="panelCumulative"></span> <span class="sub-h" data-i18n="panelCumulativeSub"></span></h2>
+    <canvas id="cumulativeChart" height="160"></canvas>
+  </div>
+  <div class="panel">
+    <h2><span data-i18n="panelByWeekday"></span> <span class="sub-h" data-i18n="panelByWeekdaySub"></span></h2>
+    <canvas id="weekdayChart" height="160"></canvas>
+  </div>
+</div>
+
+<div class="panel" style="margin-top: 16px;">
+  <h2><span data-i18n="panelModelByMonth"></span> <span class="sub-h" data-i18n="panelModelByMonthSub"></span></h2>
+  <canvas id="modelStackChart" height="80"></canvas>
+</div>
+
 <div class="panel" style="margin-top: 16px;">
   <h2 data-i18n="panelMonthlyDetail"></h2>
   <table>
@@ -355,6 +371,149 @@ if (!window.CLAUDE_DATA) {
       }
     });
   }
+
+  // ---- Cumulative usage curve (daily, since first record) ----
+  const sortedDaily = [...daily].sort((a, b) => a.date.localeCompare(b.date));
+  let cumTok = 0, cumCost = 0;
+  const cumPoints = sortedDaily.map(d => {
+    cumTok += d.totalTokens;
+    cumCost += d.totalCost;
+    return { date: d.date, tok: cumTok, cost: cumCost };
+  });
+
+  const dsCumTok = I18N.t('dsCumulativeTokens');
+  const dsCumCost = I18N.t('dsCumulativeCost');
+  new Chart(document.getElementById('cumulativeChart'), {
+    type: 'line',
+    data: {
+      labels: cumPoints.map(p => p.date),
+      datasets: [
+        {
+          label: dsCumTok,
+          data: cumPoints.map(p => p.tok),
+          borderColor: '#d97757',
+          backgroundColor: 'rgba(217, 119, 87, 0.15)',
+          fill: true,
+          tension: 0.2,
+          pointRadius: 0,
+          yAxisID: 'y',
+        },
+        {
+          label: dsCumCost,
+          data: cumPoints.map(p => p.cost),
+          borderColor: '#79c0ff',
+          backgroundColor: 'transparent',
+          tension: 0.2,
+          pointRadius: 0,
+          yAxisID: 'y1',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#e6edf3', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.dataset.label === dsCumTok) return I18N.t('tooltip_tokensLabel', fmt(ctx.raw));
+              if (ctx.dataset.label === dsCumCost) return I18N.t('tooltip_costLabel', fmtUSD(ctx.raw));
+              return ctx.formattedValue;
+            }
+          }
+        },
+      },
+      scales: {
+        y: { ticks: { color: '#8b949e', callback: v => fmt(v) }, grid: { color: '#30363d' } },
+        y1: { position: 'right', ticks: { color: '#8b949e', callback: v => '$' + Math.round(v).toLocaleString() }, grid: { display: false } },
+        x: { ticks: { color: '#8b949e', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+      },
+    },
+  });
+
+  // ---- Average by weekday (across all data) ----
+  const dowSums = [0, 0, 0, 0, 0, 0, 0];
+  const dowCounts = [0, 0, 0, 0, 0, 0, 0];
+  for (const d of daily) {
+    const dayIdx = new Date(d.date).getDay();
+    dowSums[dayIdx] += d.totalTokens;
+    dowCounts[dayIdx] += 1;
+  }
+  const dowAvg = dowSums.map((sum, i) => dowCounts[i] > 0 ? sum / dowCounts[i] : 0);
+  const dowLabels = I18N.dow();
+  // Reorder: Mon-first (1..6, 0) reads more naturally
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const reorderedLabels = order.map(i => dowLabels[i]);
+  const reorderedAvg = order.map(i => dowAvg[i]);
+  const reorderedCounts = order.map(i => dowCounts[i]);
+
+  new Chart(document.getElementById('weekdayChart'), {
+    type: 'bar',
+    data: {
+      labels: reorderedLabels,
+      datasets: [{
+        label: I18N.t('dsTotalTokens'),
+        data: reorderedAvg,
+        backgroundColor: order.map(i => i === 0 || i === 6 ? '#bc8cff' : '#d97757'),
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => [
+              I18N.t('tooltip_avgPerActiveDay', fmt(ctx.raw)),
+              I18N.t('tooltip_activeDaysCount', reorderedCounts[ctx.dataIndex]),
+            ]
+          }
+        },
+      },
+      scales: {
+        y: { ticks: { color: '#8b949e', callback: v => fmt(v) }, grid: { color: '#30363d' } },
+        x: { ticks: { color: '#8b949e' }, grid: { display: false } },
+      },
+    },
+  });
+
+  // ---- Model share by month (stacked bar) ----
+  const allModelNames = [...modelTotals.keys()].sort((a, b) => modelTotals.get(b) - modelTotals.get(a));
+  const stackColors = ['#d97757', '#79c0ff', '#56d364', '#f0a878', '#bc8cff', '#8b949e'];
+  const stackDatasets = allModelNames.map((name, idx) => ({
+    label: modelShort(name).label,
+    data: monthly.map(m => {
+      const b = (m.modelBreakdowns || []).find(x => x.modelName === name);
+      return b ? b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens : 0;
+    }),
+    backgroundColor: stackColors[idx % stackColors.length],
+    borderRadius: 2,
+  }));
+
+  new Chart(document.getElementById('modelStackChart'), {
+    type: 'bar',
+    data: {
+      labels: monthly.map(m => m.month),
+      datasets: stackDatasets,
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#e6edf3', font: { size: 10 }, boxWidth: 10, padding: 6 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${fmt(ctx.raw)}`
+          }
+        },
+      },
+      scales: {
+        x: { stacked: true, ticks: { color: '#8b949e' }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: '#8b949e', callback: v => fmt(v) }, grid: { color: '#30363d' } },
+      },
+    },
+  });
 
   // ---- Monthly detail table ----
   const tbody = document.getElementById('monthlyTable');

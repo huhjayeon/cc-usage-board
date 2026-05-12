@@ -20,6 +20,31 @@ function modelShort(name) {
 // Sum all token columns of a model breakdown entry from ccusage.
 const modelTokens = b => b.inputTokens + b.outputTokens + b.cacheCreationTokens + b.cacheReadTokens;
 
+// Format Date in the user's local timezone (NOT UTC like Date#toISOString).
+// Use these for "today/yesterday/this month" comparisons — otherwise dates
+// near midnight will shift by one because ccusage buckets are local while
+// toISOString returns UTC.
+function localDateString(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+function localMonthString(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
+// Parse "YYYY-MM-DD" as midnight in the user's local timezone.
+// (new Date("YYYY-MM-DD") would parse as UTC midnight, which gives the wrong
+// day-of-week / day-of-month for users west of UTC.)
+function parseLocalDate(s) {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 // Default chart palette. Use .slice(0, n) when fewer colors are needed.
 const CHART_COLORS = ['#d97757', '#79c0ff', '#56d364', '#f0a878', '#bc8cff', '#8b949e'];
 

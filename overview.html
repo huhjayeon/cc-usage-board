@@ -243,7 +243,7 @@ if (!window.CLAUDE_DATA) {
 } else {
   const monthly = [...window.CLAUDE_DATA.monthly.monthly].sort((a, b) => a.month.localeCompare(b.month));
   const daily = window.CLAUDE_DATA.daily.daily;
-  const todayMonth = new Date().toISOString().slice(0, 7);
+  const todayMonth = localMonthString(new Date());
 
   // Pre-group daily entries by month so the monthly table can look up O(1)
   // instead of running daily.filter(...) once per row.
@@ -456,7 +456,7 @@ if (!window.CLAUDE_DATA) {
   const dowSums = [0, 0, 0, 0, 0, 0, 0];
   const dowCounts = [0, 0, 0, 0, 0, 0, 0];
   for (const d of daily) {
-    const dayIdx = new Date(d.date).getDay();
+    const dayIdx = parseLocalDate(d.date).getDay();
     dowSums[dayIdx] += d.totalTokens;
     dowCounts[dayIdx] += 1;
   }

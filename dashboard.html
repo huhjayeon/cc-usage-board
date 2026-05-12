@@ -255,7 +255,7 @@ function findByDate(daily, dateStr) {
 function dateOffset(days) {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localDateString(d);
 }
 
 function render({ daily, monthly }) {
@@ -273,9 +273,11 @@ function render({ daily, monthly }) {
   const prev7 = daily.filter(d => d.date > dateOffset(-14) && d.date <= dateOffset(-7));
   const thisMonth = monthly.find(m => m.month === monthStart);
   const prevMonthStr = (() => {
-    const d = new Date(monthStart + '-01');
+    // Parse monthStart as local midnight (T00:00 forces local interpretation;
+    // a bare YYYY-MM-DD would be parsed as UTC by JS).
+    const d = new Date(monthStart + '-01T00:00');
     d.setMonth(d.getMonth() - 1);
-    return d.toISOString().slice(0, 7);
+    return localMonthString(d);
   })();
   const total = monthly.reduce((s, m) => ({ tok: s.tok + m.totalTokens, cost: s.cost + m.totalCost }), { tok: 0, cost: 0 });
 
@@ -321,7 +323,7 @@ function render({ daily, monthly }) {
   const week7 = sumTok(last7), prevWeek7 = sumTok(prev7);
   setDelta('s-week-delta', deltaSpan(week7, prevWeek7, I18N.t('deltaVsPrev7')));
   // MTD comparison: same range (e.g. 5/1~5/11 vs 4/1~4/11)
-  const todayDate = new Date(today);
+  const todayDate = parseLocalDate(today);
   const todayDay = todayDate.getDate();
   const sumRange = (yyyymm, fromDay, toDay) => daily
     .filter(d => d.date.startsWith(yyyymm))
@@ -429,7 +431,7 @@ function render({ daily, monthly }) {
     const d = new Date(start);
     d.setDate(d.getDate() + i);
     if (d > today_) break;
-    const ds = d.toISOString().slice(0, 10);
+    const ds = localDateString(d);
     const data = dailyMap.get(ds);
     const tok = data?.totalTokens || 0;
     let level = 0;
@@ -493,7 +495,7 @@ function render({ daily, monthly }) {
   const tbody = document.getElementById('dailyTable');
   const recent30 = [...daily].slice(-30).reverse();
   for (const d of recent30) {
-    const dt = new Date(d.date);
+    const dt = parseLocalDate(d.date);
     const tr = el('tr', null,
       el('td', null, d.date),
       el('td', null, dow[dt.getDay()]),
